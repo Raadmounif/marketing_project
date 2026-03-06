@@ -1,0 +1,39 @@
+# ========================
+# Laravel Backend
+# ========================
+backend/vendor/
+backend/.env
+backend/.env.production
+backend/.env.local
+backend/storage/app/public/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+backend/bootstrap/cache/*.php
+backend/node_modules/
+backend/public/storage
+
+# ========================
+# React Frontend
+# ========================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# ========================
+# Deploy staging (server scripts)
+# ========================
+_deploy_staging/
+
+# ========================
+# IDE / OS
+# ========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
