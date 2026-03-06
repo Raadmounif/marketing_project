@@ -60,6 +60,7 @@
     "order_now": "Order Now",
     "promo_available": "Promo code available",
     "inactive": "Unavailable",
+    "out_of_stock": "Temporarily Out of Stock",
     "delivery_cost": "Delivery Cost",
     "photos": "Product Photos"
   },
@@ -164,7 +165,11 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "confirm_delete": "Are you sure you want to delete?",
-    "image": "Image (optional)"
+    "image": "Image (optional)",
+    "fee_schedule_title": "Marketer Fee Schedule",
+    "fee_schedule_enable": "Enable Schedule",
+    "fee_schedule_qty_hint": "Fee for small orders (1–4 units) — 5+ units: No fee",
+    "fee_schedule_state_extra": "Extra fee by emirate"
   },
   "admin": {
     "settings": "System Settings",
@@ -202,7 +207,16 @@
     "title": "Statistics",
     "successful_orders": "Successful Orders",
     "cumulative_total": "Total Sales",
-    "cumulative_marketer_fee": "Total Marketer Fees"
+    "cumulative_marketer_fee": "Total Marketer Fees",
+    "commission_collected": "Commission Collected",
+    "commission_uncollected": "Commission Pending",
+    "fee_detail_title": "Marketer Fee Details",
+    "order_number": "Order #",
+    "customer": "Customer",
+    "product": "Product",
+    "qty": "Qty",
+    "fee_amount": "Fee",
+    "commission_status": "Status"
   },
   "common": {
     "loading": "Loading...",

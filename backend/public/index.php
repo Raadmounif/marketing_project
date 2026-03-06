@@ -4,9 +4,10 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// For cPanel deployment, set this to dirname(__DIR__) . '/app'
-// For local development, use dirname(__DIR__)
-$laravelRoot = dirname(__DIR__);
+// Auto-detect: cPanel has Laravel in public_html/app/, local has it one level up
+$laravelRoot = is_dir(dirname(__DIR__) . '/app/vendor')
+    ? dirname(__DIR__) . '/app'
+    : dirname(__DIR__);
 
 if (file_exists($maintenance = $laravelRoot . '/storage/framework/maintenance.php')) {
     require $maintenance;

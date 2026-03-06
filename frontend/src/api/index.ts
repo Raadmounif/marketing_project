@@ -75,6 +75,7 @@ export const ordersApi = {
   submitFeedback: (orderId: number, feedback: string) =>
     api.patch(`/orders/${orderId}/feedback`, { feedback }),
   deleteOrder: (orderId: number) => api.delete(`/orders/${orderId}`),
+  toggleCommission: (orderId: number) => api.patch(`/orders/${orderId}/commission`),
 }
 
 // User management

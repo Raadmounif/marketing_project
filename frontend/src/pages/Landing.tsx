@@ -28,7 +28,7 @@ export default function Landing() {
   const [favoritedIds, setFavoritedIds] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
 
-  const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || ''
+  const storageBase = import.meta.env.VITE_STORAGE_URL || import.meta.env.VITE_API_URL?.replace('/api', '/storage') || ''
 
   useEffect(() => {
     Promise.all([offersApi.list(), boardApi.list(), hiwApi.list()])
@@ -40,7 +40,7 @@ export default function Landing() {
       .finally(() => setLoading(false))
   }, [])
 
-  const allProducts = offers.flatMap((o) => (o.active_products || []).map((p) => ({ ...p, offer: o })))
+  const allProducts = offers.flatMap((o) => (o.products || []).map((p) => ({ ...p, offer: o })))
 
   const filteredProducts = allProducts.filter((p) => {
     const matchOffer = selectedOffer === 'all' || p.offer_id === selectedOffer
@@ -87,7 +87,7 @@ export default function Landing() {
                 <div className="relative h-full w-full flex items-center justify-center overflow-hidden bg-tobacco-800">
                   {board.image_path && (
                     <img
-                      src={`${apiBase}/storage/${board.image_path}`}
+                      src={`${storageBase}/${board.image_path}`}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover opacity-40"
                     />
@@ -199,7 +199,7 @@ export default function Landing() {
           ) : selectedOffer === 'all' ? (
             <div className="space-y-12">
               {offers.map((offer) => {
-                const products = (offer.active_products || []).filter((p) =>
+                const products = (offer.products || []).filter((p) =>
                   !search || p.name_ar.includes(search) || p.name_en.toLowerCase().includes(search.toLowerCase())
                 )
                 if (products.length === 0 && search) return null

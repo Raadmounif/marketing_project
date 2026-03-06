@@ -4,9 +4,13 @@ import { useTranslation } from 'react-i18next'
 import { useLang } from '../../contexts/LangContext'
 import { offersApi } from '../../api'
 import { UAE_STATES } from '../../types'
-import type { Offer } from '../../types'
+import type { Offer, MarketerFeeSchedule } from '../../types'
 
 const EMPTY_COSTS = UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), { other: 0 } as Record<string, number>)
+const EMPTY_FEE_SCHEDULE: MarketerFeeSchedule = {
+  qty_fees: { '1': 0, '2': 0, '3': 0, '4': 0 },
+  state_extras: UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
+}
 
 export default function ManageOffers() {
   const { t } = useTranslation()
@@ -15,7 +19,14 @@ export default function ManageOffers() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null)
-  const [form, setForm] = useState({ name_ar: '', name_en: '', code: '', delivery_costs: { ...EMPTY_COSTS } })
+  const [form, setForm] = useState({
+    name_ar: '',
+    name_en: '',
+    code: '',
+    delivery_costs: { ...EMPTY_COSTS },
+    marketer_fee_schedule: { ...EMPTY_FEE_SCHEDULE } as MarketerFeeSchedule,
+    use_fee_schedule: false,
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -25,18 +36,38 @@ export default function ManageOffers() {
 
   const openCreate = () => {
     setEditingOffer(null)
-    setForm({ name_ar: '', name_en: '', code: '', delivery_costs: { ...EMPTY_COSTS } })
+    setForm({
+      name_ar: '', name_en: '', code: '',
+      delivery_costs: { ...EMPTY_COSTS },
+      marketer_fee_schedule: {
+        qty_fees: { '1': 0, '2': 0, '3': 0, '4': 0 },
+        state_extras: UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
+      },
+      use_fee_schedule: false,
+    })
     setShowForm(true)
     setError('')
   }
 
   const openEdit = (offer: Offer) => {
     setEditingOffer(offer)
+    const schedule = offer.marketer_fee_schedule ?? {
+      qty_fees: { '1': 0, '2': 0, '3': 0, '4': 0 },
+      state_extras: UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
+    }
     setForm({
       name_ar: offer.name_ar,
       name_en: offer.name_en,
       code: offer.code,
       delivery_costs: { ...EMPTY_COSTS, ...offer.delivery_costs },
+      marketer_fee_schedule: {
+        qty_fees: { '1': 0, '2': 0, '3': 0, '4': 0, ...(schedule.qty_fees || {}) },
+        state_extras: {
+          ...UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
+          ...(schedule.state_extras || {}),
+        },
+      },
+      use_fee_schedule: !!offer.marketer_fee_schedule,
     })
     setShowForm(true)
     setError('')
@@ -49,16 +80,43 @@ export default function ManageOffers() {
     }))
   }
 
+  const handleQtyFeeChange = (qty: string, val: string) => {
+    setForm((prev) => ({
+      ...prev,
+      marketer_fee_schedule: {
+        ...prev.marketer_fee_schedule,
+        qty_fees: { ...prev.marketer_fee_schedule.qty_fees, [qty]: parseFloat(val) || 0 },
+      },
+    }))
+  }
+
+  const handleStateExtraChange = (state: string, val: string) => {
+    setForm((prev) => ({
+      ...prev,
+      marketer_fee_schedule: {
+        ...prev.marketer_fee_schedule,
+        state_extras: { ...prev.marketer_fee_schedule.state_extras, [state]: parseFloat(val) || 0 },
+      },
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     setError('')
     try {
+      const payload = {
+        name_ar: form.name_ar,
+        name_en: form.name_en,
+        code: form.code,
+        delivery_costs: form.delivery_costs,
+        marketer_fee_schedule: form.use_fee_schedule ? form.marketer_fee_schedule : null,
+      }
       if (editingOffer) {
-        const res = await offersApi.update(editingOffer.id, form)
+        const res = await offersApi.update(editingOffer.id, payload)
         setOffers((prev) => prev.map((o) => o.id === editingOffer.id ? res.data : o))
       } else {
-        const res = await offersApi.create(form)
+        const res = await offersApi.create(payload)
         setOffers((prev) => [res.data, ...prev])
       }
       setShowForm(false)
@@ -100,7 +158,7 @@ export default function ManageOffers() {
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            <form onSubmit={handleSubmit} className="p-5 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="label-text">{t('staff.offer_name_ar')}</label>
@@ -116,6 +174,7 @@ export default function ManageOffers() {
                 <input value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))} required className="input-field font-mono" />
               </div>
 
+              {/* Delivery costs */}
               <div>
                 <p className="label-text mb-3">{t('staff.delivery_costs')} ({t('common.aed')})</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -126,8 +185,7 @@ export default function ManageOffers() {
                         type="number"
                         value={form.delivery_costs[state] ?? 0}
                         onChange={(e) => handleCostChange(state, e.target.value)}
-                        min="0"
-                        step="0.5"
+                        min="0" step="0.5"
                         className="input-field text-sm py-2"
                       />
                     </div>
@@ -138,12 +196,80 @@ export default function ManageOffers() {
                       type="number"
                       value={form.delivery_costs['other'] ?? 0}
                       onChange={(e) => handleCostChange('other', e.target.value)}
-                      min="0"
-                      step="0.5"
+                      min="0" step="0.5"
                       className="input-field text-sm py-2"
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Marketer Fee Schedule */}
+              <div className="border border-tobacco-700 rounded-xl p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-gold-400 text-sm">{t('staff.fee_schedule_title')}</p>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.use_fee_schedule}
+                      onChange={(e) => setForm((p) => ({ ...p, use_fee_schedule: e.target.checked }))}
+                      className="w-4 h-4 accent-gold-500"
+                    />
+                    <span className="text-xs text-tobacco-300">{t('staff.fee_schedule_enable')}</span>
+                  </label>
+                </div>
+
+                {form.use_fee_schedule ? (
+                  <>
+                    {/* Qty fees 1-4 */}
+                    <div>
+                      <p className="text-xs text-tobacco-400 mb-2">{t('staff.fee_schedule_qty_hint')}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {['1', '2', '3', '4'].map((qty) => (
+                          <div key={qty}>
+                            <label className="text-xs text-tobacco-400 mb-1 block">
+                              {qty} {lang === 'ar' ? 'وحدة' : (qty === '1' ? 'unit' : 'units')}
+                            </label>
+                            <input
+                              type="number"
+                              value={form.marketer_fee_schedule.qty_fees[qty] ?? 0}
+                              onChange={(e) => handleQtyFeeChange(qty, e.target.value)}
+                              min="0" step="0.5"
+                              className="input-field text-sm py-2"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-forest-600 mt-2 font-medium">
+                        ✓ {lang === 'ar' ? '5 وحدات أو أكثر: بدون عمولة' : '5+ units: No fee'}
+                      </p>
+                    </div>
+
+                    {/* State extras */}
+                    <div>
+                      <p className="text-xs text-tobacco-400 mb-2">{t('staff.fee_schedule_state_extra')}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {UAE_STATES.map((state) => (
+                          <div key={state}>
+                            <label className="text-xs text-tobacco-400 mb-1 block">{t(`states.${state}`)}</label>
+                            <input
+                              type="number"
+                              value={form.marketer_fee_schedule.state_extras[state] ?? 0}
+                              onChange={(e) => handleStateExtraChange(state, e.target.value)}
+                              min="0" step="0.5"
+                              className="input-field text-sm py-2"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-tobacco-500 italic">
+                    {lang === 'ar'
+                      ? 'جدول العمولة غير مفعّل — ستُستخدم عمولة المنتج الافتراضية'
+                      : 'Fee schedule disabled — product-level fee will be used'}
+                  </p>
+                )}
               </div>
 
               {error && <div className="p-3 bg-red-900/50 border border-red-800 rounded-lg text-red-300 text-sm">{error}</div>}
@@ -173,6 +299,9 @@ export default function ManageOffers() {
                 <div>
                   <p className="font-medium text-cream-100">{lang === 'ar' ? offer.name_ar : offer.name_en}</p>
                   <p className="text-xs text-tobacco-500">{lang === 'ar' ? offer.name_en : offer.name_ar}</p>
+                  {offer.marketer_fee_schedule && (
+                    <span className="text-xs text-forest-600">✓ {lang === 'ar' ? 'جدول العمولة مفعّل' : 'Fee schedule active'}</span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">

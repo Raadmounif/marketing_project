@@ -10,8 +10,9 @@ class OfferController extends Controller
 {
     public function index(): JsonResponse
     {
+        // Return all products (including inactive) so the frontend can show "out of stock"
         $offers = Offer::where('is_active', true)
-            ->with(['activeProducts'])
+            ->with(['products'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -39,6 +40,13 @@ class OfferController extends Controller
             'delivery_costs.Ras Al Khaimah'  => 'required|numeric|min:0',
             'delivery_costs.Fujairah'        => 'required|numeric|min:0',
             'delivery_costs.other'           => 'required|numeric|min:0',
+            'marketer_fee_schedule'                   => 'nullable|array',
+            'marketer_fee_schedule.qty_fees'          => 'nullable|array',
+            'marketer_fee_schedule.qty_fees.1'        => 'nullable|numeric|min:0',
+            'marketer_fee_schedule.qty_fees.2'        => 'nullable|numeric|min:0',
+            'marketer_fee_schedule.qty_fees.3'        => 'nullable|numeric|min:0',
+            'marketer_fee_schedule.qty_fees.4'        => 'nullable|numeric|min:0',
+            'marketer_fee_schedule.state_extras'      => 'nullable|array',
             'is_active'      => 'boolean',
         ]);
 
@@ -54,6 +62,9 @@ class OfferController extends Controller
             'name_en'        => 'sometimes|string|max:255',
             'code'           => "sometimes|string|unique:offers,code,{$offer->id}|max:50",
             'delivery_costs' => 'sometimes|array',
+            'marketer_fee_schedule'              => 'nullable|array',
+            'marketer_fee_schedule.qty_fees'     => 'nullable|array',
+            'marketer_fee_schedule.state_extras' => 'nullable|array',
             'is_active'      => 'sometimes|boolean',
         ]);
 

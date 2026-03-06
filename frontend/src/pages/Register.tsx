@@ -67,7 +67,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="label-text">{t('auth.email')}</label>
+              <label className="label-text">{t('auth.email')} <span className="text-red-400">*</span></label>
               <input name="email" value={form.email} onChange={handleChange} required type="email" className="input-field" />
               {getFieldError('email') && <p className="text-red-400 text-xs mt-1">{getFieldError('email')}</p>}
             </div>

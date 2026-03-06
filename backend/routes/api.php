@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // Staff + Admin routes
 Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
     Route::get('/orders', [OrderController::class, 'index']);
+    Route::patch('/orders/{order}/commission', [OrderController::class, 'toggleCommission']);
     Route::get('/notifications/overdue', [NotificationController::class, 'index']);
     Route::get('/statistics', [StatisticController::class, 'index']);
 

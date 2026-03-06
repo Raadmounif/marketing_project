@@ -60,6 +60,7 @@
     "order_now": "اطلب الآن",
     "promo_available": "كود خصم متاح",
     "inactive": "غير متاح",
+    "out_of_stock": "مؤقتاً غير متوفر",
     "delivery_cost": "رسوم التوصيل",
     "photos": "صور المنتج"
   },
@@ -164,7 +165,11 @@
     "cancel": "إلغاء",
     "delete": "حذف",
     "confirm_delete": "هل أنت متأكد من الحذف؟",
-    "image": "صورة (اختياري)"
+    "image": "صورة (اختياري)",
+    "fee_schedule_title": "جدول عمولة المسوق",
+    "fee_schedule_enable": "تفعيل الجدول",
+    "fee_schedule_qty_hint": "عمولة للطلبات الصغيرة (1–4 وحدات) — 5 وحدات أو أكثر: بدون عمولة",
+    "fee_schedule_state_extra": "رسوم إضافية حسب الإمارة"
   },
   "admin": {
     "settings": "إعدادات النظام",
@@ -202,7 +207,16 @@
     "title": "الإحصائيات",
     "successful_orders": "الطلبات الناجحة",
     "cumulative_total": "إجمالي المبيعات",
-    "cumulative_marketer_fee": "إجمالي عمولات المسوق"
+    "cumulative_marketer_fee": "إجمالي عمولات المسوق",
+    "commission_collected": "عمولات محصّلة",
+    "commission_uncollected": "عمولات لم تُحصَّل",
+    "fee_detail_title": "تفاصيل عمولات المسوق",
+    "order_number": "رقم الطلب",
+    "customer": "الزبون",
+    "product": "المنتج",
+    "qty": "الكمية",
+    "fee_amount": "العمولة",
+    "commission_status": "الحالة"
   },
   "common": {
     "loading": "جاري التحميل...",

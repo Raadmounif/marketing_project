@@ -50,7 +50,10 @@ export default function Navbar() {
             )}
 
             {user && (user.role === 'staff' || user.role === 'admin') && (
-              <Link to="/staff" className={navLinkClass('/staff')}>{t('nav.staff')}</Link>
+              <>
+                <Link to="/staff" className={navLinkClass('/staff')}>{t('nav.staff')}</Link>
+                <Link to="/profile" className={navLinkClass('/profile')}>{t('nav.profile')}</Link>
+              </>
             )}
 
             {user && user.role === 'admin' && (
@@ -112,7 +115,10 @@ export default function Navbar() {
           )}
 
           {user && (user.role === 'staff' || user.role === 'admin') && (
-            <Link to="/staff" className="block px-3 py-2 rounded-lg hover:bg-tobacco-800 text-cream-200" onClick={() => setMenuOpen(false)}>{t('nav.staff')}</Link>
+            <>
+              <Link to="/staff" className="block px-3 py-2 rounded-lg hover:bg-tobacco-800 text-cream-200" onClick={() => setMenuOpen(false)}>{t('nav.staff')}</Link>
+              <Link to="/profile" className="block px-3 py-2 rounded-lg hover:bg-tobacco-800 text-cream-200" onClick={() => setMenuOpen(false)}>{t('nav.profile')}</Link>
+            </>
           )}
 
           {user && user.role === 'admin' && (

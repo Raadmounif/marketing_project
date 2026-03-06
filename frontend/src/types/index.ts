@@ -30,12 +30,18 @@ export interface User {
   created_at: string
 }
 
+export interface MarketerFeeSchedule {
+  qty_fees: Record<string, number>
+  state_extras: Record<string, number>
+}
+
 export interface Offer {
   id: number
   name_ar: string
   name_en: string
   code: string
   delivery_costs: Record<string, number>
+  marketer_fee_schedule: MarketerFeeSchedule | null
   is_active: boolean
   products?: Product[]
   active_products?: Product[]
@@ -75,6 +81,7 @@ export interface Order {
   receipt_path: string | null
   receipt_uploaded_at: string | null
   feedback: string | null
+  commission_collected: boolean
   product?: Product
   user?: User
   created_at: string
@@ -109,4 +116,7 @@ export interface Statistic {
   successful_orders_count: number
   cumulative_total: number
   cumulative_marketer_fee: number
+  commission_collected: number
+  commission_uncollected: number
+  orders: Order[]
 }

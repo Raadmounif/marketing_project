@@ -13,15 +13,17 @@ class Order extends Model
         'order_number', 'user_id', 'product_id', 'quantity',
         'notes', 'total', 'marketer_fee_total', 'delivery_date',
         'status', 'receipt_path', 'receipt_uploaded_at', 'feedback',
+        'commission_collected',
     ];
 
     protected function casts(): array
     {
         return [
-            'delivery_date' => 'date',
-            'receipt_uploaded_at' => 'datetime',
-            'total' => 'float',
-            'marketer_fee_total' => 'float',
+            'delivery_date'        => 'date',
+            'receipt_uploaded_at'  => 'datetime',
+            'total'                => 'float',
+            'marketer_fee_total'   => 'float',
+            'commission_collected' => 'boolean',
         ];
     }
 

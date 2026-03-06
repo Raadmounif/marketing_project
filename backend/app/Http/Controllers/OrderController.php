@@ -47,7 +47,11 @@ class OrderController extends Controller
 
         $total = ($data['quantity'] * $product->unit_total_price) + $deliveryCost - $promoDiscount;
         $total = max(0, $total);
-        $marketerFeeTotal = $data['quantity'] * $product->marketer_fee_per_unit;
+        $marketerFeeTotal = $product->offer->calculateMarketerFee(
+            $data['quantity'],
+            $user->state,
+            $product->marketer_fee_per_unit
+        );
         $deliveryDate = now()->addDays(2)->toDateString();
 
         $order = DB::transaction(function () use ($data, $user, $product, $total, $marketerFeeTotal, $deliveryDate) {
@@ -107,6 +111,12 @@ class OrderController extends Controller
     {
         $order->delete();
         return response()->json(['message' => 'Order deleted.']);
+    }
+
+    public function toggleCommission(Request $request, Order $order): JsonResponse
+    {
+        $order->update(['commission_collected' => !$order->commission_collected]);
+        return response()->json($order->fresh()->load('product.offer', 'user'));
     }
 
     public function submitFeedback(Request $request, Order $order): JsonResponse

@@ -116,7 +116,7 @@ export default function ManageProducts() {
     }
   }
 
-  const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || ''
+  const storageBase = import.meta.env.VITE_STORAGE_URL || import.meta.env.VITE_API_URL?.replace('/api', '/storage') || ''
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 animate-fade-in">
@@ -254,7 +254,7 @@ export default function ManageProducts() {
           {products.map((product) => (
             <div key={product.id} className={`card p-4 flex flex-col gap-3 ${!product.is_active ? 'opacity-60' : ''}`}>
               {product.photos?.[0] && (
-                <img src={`${apiBase}/storage/${product.photos[0]}`} alt="" className="w-full h-36 object-cover rounded-lg" />
+                <img src={`${storageBase}/${product.photos[0]}`} alt="" className="w-full h-36 object-cover rounded-lg" />
               )}
               <div>
                 <p className="font-bold text-cream-100">{lang === 'ar' ? product.name_ar : product.name_en}</p>

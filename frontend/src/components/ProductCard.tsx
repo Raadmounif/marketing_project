@@ -23,9 +23,9 @@ export default function ProductCard({ product, isFavorited = false, onFavoriteCh
   const [imgError, setImgError] = useState(false)
 
   const name = lang === 'ar' ? product.name_ar : product.name_en
-  const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || ''
+  const storageBase = import.meta.env.VITE_STORAGE_URL || import.meta.env.VITE_API_URL?.replace('/api', '/storage') || ''
   const firstPhoto = product.photos?.[0]
-    ? `${apiBase}/storage/${product.photos[0]}`
+    ? `${storageBase}/${product.photos[0]}`
     : null
 
   const handleFavorite = async () => {
@@ -96,10 +96,10 @@ export default function ProductCard({ product, isFavorited = false, onFavoriteCh
           </div>
         )}
 
-        {/* Inactive overlay */}
+        {/* Out-of-stock overlay */}
         {!product.is_active && (
-          <div className="absolute inset-0 bg-tobacco-950/70 flex items-center justify-center">
-            <span className="text-tobacco-400 font-bold text-sm">{t('product.inactive')}</span>
+          <div className="absolute inset-0 bg-tobacco-950/80 flex items-center justify-center">
+            <span className="text-amber-400 font-bold text-sm text-center px-2">{t('product.out_of_stock')}</span>
           </div>
         )}
       </div>
