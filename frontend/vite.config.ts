@@ -6,6 +6,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          return assetInfo.name?.endsWith('.css') ? 'app.css' : 'assets/[name]-[hash][extname]'
+        },
+      },
+    },
   },
   server: {
     proxy: {
