@@ -252,12 +252,27 @@ export default function ManageProducts() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {products.map((product) => (
-            <div key={product.id} className={`card p-4 flex flex-col gap-3 ${!product.is_active ? 'opacity-60' : ''}`}>
-              {product.photos?.[0] && (
-                <img src={`${storageBase}/${product.photos[0]}`} alt="" className="w-full h-36 object-cover rounded-lg" />
+            <div key={product.id} className={`card p-4 flex flex-col gap-3 relative ${!product.is_active ? 'border-amber-800/60' : ''}`}>
+              {/* Out-of-stock banner */}
+              {!product.is_active && (
+                <div className="absolute top-0 inset-x-0 bg-amber-800/80 text-amber-200 text-xs font-bold text-center py-1 rounded-t-xl">
+                  {lang === 'ar' ? '⛔ مؤقتاً غير متوفر' : '⛔ Out of Stock'}
+                </div>
               )}
+
+              {product.photos?.[0] && (
+                <img
+                  src={`${storageBase}/${product.photos[0]}`}
+                  alt=""
+                  className={`w-full h-36 object-cover rounded-lg ${!product.is_active ? 'mt-5 opacity-60' : ''}`}
+                />
+              )}
+              {!product.photos?.[0] && !product.is_active && <div className="mt-5" />}
+
               <div>
-                <p className="font-bold text-cream-100">{lang === 'ar' ? product.name_ar : product.name_en}</p>
+                <p className={`font-bold ${product.is_active ? 'text-cream-100' : 'text-tobacco-400'}`}>
+                  {lang === 'ar' ? product.name_ar : product.name_en}
+                </p>
                 <p className="text-xs text-tobacco-500">{lang === 'ar' ? product.name_en : product.name_ar}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
@@ -280,12 +295,27 @@ export default function ManageProducts() {
                   </div>
                 )}
               </div>
+
               <div className="flex gap-2 flex-wrap">
+                {/* Activate button is large and green for inactive products */}
                 <button
                   onClick={() => handleToggle(product)}
-                  className={`text-xs py-1.5 px-3 rounded-lg font-medium transition-colors ${product.is_active ? 'bg-forest-700 hover:bg-forest-600 text-white' : 'bg-tobacco-700 hover:bg-tobacco-600 text-cream-200'}`}
+                  className={`text-xs py-1.5 px-3 rounded-lg font-bold transition-colors flex items-center gap-1 ${
+                    product.is_active
+                      ? 'bg-tobacco-700 hover:bg-tobacco-600 text-tobacco-300'
+                      : 'bg-forest-600 hover:bg-forest-500 text-white ring-2 ring-forest-500/50'
+                  }`}
                 >
-                  {product.is_active ? t('staff.disable') : t('staff.enable')}
+                  {product.is_active ? (
+                    <>{t('staff.disable')}</>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {lang === 'ar' ? 'تفعيل المنتج' : 'Activate'}
+                    </>
+                  )}
                 </button>
                 <button onClick={() => openEdit(product)} className="btn-secondary text-xs py-1.5 px-3">{t('common.edit')}</button>
                 <button onClick={() => handleDelete(product.id)} className="btn-danger text-xs py-1.5 px-3">{t('common.delete')}</button>

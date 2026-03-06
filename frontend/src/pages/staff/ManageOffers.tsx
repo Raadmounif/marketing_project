@@ -6,10 +6,13 @@ import { offersApi } from '../../api'
 import { UAE_STATES } from '../../types'
 import type { Offer, MarketerFeeSchedule } from '../../types'
 
-const EMPTY_COSTS = UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), { other: 0 } as Record<string, number>)
-const EMPTY_FEE_SCHEDULE: MarketerFeeSchedule = {
-  qty_fees: { '1': 0, '2': 0, '3': 0, '4': 0 },
-  state_extras: UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
+const ZERO_COSTS = UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), { other: 0 } as Record<string, number>)
+
+function emptySchedule(): MarketerFeeSchedule {
+  return {
+    qty_fees: { '1': 0, '2': 0, '3': 0, '4': 0 },
+    state_extras: UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
+  }
 }
 
 export default function ManageOffers() {
@@ -23,9 +26,7 @@ export default function ManageOffers() {
     name_ar: '',
     name_en: '',
     code: '',
-    delivery_costs: { ...EMPTY_COSTS },
-    marketer_fee_schedule: { ...EMPTY_FEE_SCHEDULE } as MarketerFeeSchedule,
-    use_fee_schedule: false,
+    marketer_fee_schedule: emptySchedule(),
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -36,48 +37,27 @@ export default function ManageOffers() {
 
   const openCreate = () => {
     setEditingOffer(null)
-    setForm({
-      name_ar: '', name_en: '', code: '',
-      delivery_costs: { ...EMPTY_COSTS },
-      marketer_fee_schedule: {
-        qty_fees: { '1': 0, '2': 0, '3': 0, '4': 0 },
-        state_extras: UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
-      },
-      use_fee_schedule: false,
-    })
+    setForm({ name_ar: '', name_en: '', code: '', marketer_fee_schedule: emptySchedule() })
     setShowForm(true)
     setError('')
   }
 
   const openEdit = (offer: Offer) => {
     setEditingOffer(offer)
-    const schedule = offer.marketer_fee_schedule ?? {
-      qty_fees: { '1': 0, '2': 0, '3': 0, '4': 0 },
-      state_extras: UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
-    }
-    setForm({
-      name_ar: offer.name_ar,
-      name_en: offer.name_en,
-      code: offer.code,
-      delivery_costs: { ...EMPTY_COSTS, ...offer.delivery_costs },
-      marketer_fee_schedule: {
-        qty_fees: { '1': 0, '2': 0, '3': 0, '4': 0, ...(schedule.qty_fees || {}) },
-        state_extras: {
-          ...UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
-          ...(schedule.state_extras || {}),
-        },
+    const existing = offer.marketer_fee_schedule
+    const schedule: MarketerFeeSchedule = {
+      qty_fees: {
+        '1': 0, '2': 0, '3': 0, '4': 0,
+        ...(existing?.qty_fees ?? {}),
       },
-      use_fee_schedule: !!offer.marketer_fee_schedule,
-    })
+      state_extras: {
+        ...UAE_STATES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>),
+        ...(existing?.state_extras ?? {}),
+      },
+    }
+    setForm({ name_ar: offer.name_ar, name_en: offer.name_en, code: offer.code, marketer_fee_schedule: schedule })
     setShowForm(true)
     setError('')
-  }
-
-  const handleCostChange = (key: string, val: string) => {
-    setForm((prev) => ({
-      ...prev,
-      delivery_costs: { ...prev.delivery_costs, [key]: parseFloat(val) || 0 },
-    }))
   }
 
   const handleQtyFeeChange = (qty: string, val: string) => {
@@ -105,12 +85,13 @@ export default function ManageOffers() {
     setSaving(true)
     setError('')
     try {
+      // Always send fee schedule; delivery_costs zeroed out (replaced by fee schedule)
       const payload = {
         name_ar: form.name_ar,
         name_en: form.name_en,
         code: form.code,
-        delivery_costs: form.delivery_costs,
-        marketer_fee_schedule: form.use_fee_schedule ? form.marketer_fee_schedule : null,
+        delivery_costs: ZERO_COSTS,
+        marketer_fee_schedule: form.marketer_fee_schedule,
       }
       if (editingOffer) {
         const res = await offersApi.update(editingOffer.id, payload)
@@ -158,7 +139,9 @@ export default function ManageOffers() {
                 </svg>
               </button>
             </div>
+
             <form onSubmit={handleSubmit} className="p-5 space-y-5">
+              {/* Name + Code */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="label-text">{t('staff.offer_name_ar')}</label>
@@ -174,102 +157,64 @@ export default function ManageOffers() {
                 <input value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))} required className="input-field font-mono" />
               </div>
 
-              {/* Delivery costs */}
-              <div>
-                <p className="label-text mb-3">{t('staff.delivery_costs')} ({t('common.aed')})</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {UAE_STATES.map((state) => (
-                    <div key={state}>
-                      <label className="text-xs text-tobacco-400 mb-1 block">{t(`states.${state}`)}</label>
-                      <input
-                        type="number"
-                        value={form.delivery_costs[state] ?? 0}
-                        onChange={(e) => handleCostChange(state, e.target.value)}
-                        min="0" step="0.5"
-                        className="input-field text-sm py-2"
-                      />
-                    </div>
-                  ))}
-                  <div>
-                    <label className="text-xs text-tobacco-400 mb-1 block">{t('staff.delivery_other')}</label>
-                    <input
-                      type="number"
-                      value={form.delivery_costs['other'] ?? 0}
-                      onChange={(e) => handleCostChange('other', e.target.value)}
-                      min="0" step="0.5"
-                      className="input-field text-sm py-2"
-                    />
+              {/* Marketer Fee Schedule — always enabled */}
+              <div className="border border-gold-700/40 rounded-xl p-4 space-y-4 bg-tobacco-800/30">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-gold-500" />
+                  <p className="font-semibold text-gold-400">{t('staff.fee_schedule_title')}</p>
+                </div>
+
+                {/* Qty fees 1–4 */}
+                <div>
+                  <p className="text-xs text-tobacco-400 mb-2">{t('staff.fee_schedule_qty_hint')}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {['1', '2', '3', '4'].map((qty) => (
+                      <div key={qty}>
+                        <label className="text-xs text-tobacco-300 mb-1 block font-medium">
+                          {qty} {lang === 'ar' ? (qty === '1' ? 'وحدة' : 'وحدات') : (qty === '1' ? 'unit' : 'units')}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={form.marketer_fee_schedule.qty_fees[qty] ?? 0}
+                            onChange={(e) => handleQtyFeeChange(qty, e.target.value)}
+                            min="0" step="0.5"
+                            className="input-field text-sm py-2 pe-12"
+                          />
+                          <span className="absolute end-2 top-1/2 -translate-y-1/2 text-xs text-tobacco-500">{t('common.aed')}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-xs text-forest-500 font-medium">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {lang === 'ar' ? '5 وحدات أو أكثر: بدون عمولة' : '5+ units: No fee automatically'}
                   </div>
                 </div>
-              </div>
 
-              {/* Marketer Fee Schedule */}
-              <div className="border border-tobacco-700 rounded-xl p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold text-gold-400 text-sm">{t('staff.fee_schedule_title')}</p>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.use_fee_schedule}
-                      onChange={(e) => setForm((p) => ({ ...p, use_fee_schedule: e.target.checked }))}
-                      className="w-4 h-4 accent-gold-500"
-                    />
-                    <span className="text-xs text-tobacco-300">{t('staff.fee_schedule_enable')}</span>
-                  </label>
+                {/* State extras */}
+                <div>
+                  <p className="text-xs text-tobacco-400 mb-2">{t('staff.fee_schedule_state_extra')}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {UAE_STATES.map((state) => (
+                      <div key={state}>
+                        <label className="text-xs text-tobacco-400 mb-1 block">{t(`states.${state}`)}</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={form.marketer_fee_schedule.state_extras[state] ?? 0}
+                            onChange={(e) => handleStateExtraChange(state, e.target.value)}
+                            min="0" step="0.5"
+                            className="input-field text-sm py-2 pe-12"
+                          />
+                          <span className="absolute end-2 top-1/2 -translate-y-1/2 text-xs text-tobacco-500">{t('common.aed')}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-
-                {form.use_fee_schedule ? (
-                  <>
-                    {/* Qty fees 1-4 */}
-                    <div>
-                      <p className="text-xs text-tobacco-400 mb-2">{t('staff.fee_schedule_qty_hint')}</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {['1', '2', '3', '4'].map((qty) => (
-                          <div key={qty}>
-                            <label className="text-xs text-tobacco-400 mb-1 block">
-                              {qty} {lang === 'ar' ? 'وحدة' : (qty === '1' ? 'unit' : 'units')}
-                            </label>
-                            <input
-                              type="number"
-                              value={form.marketer_fee_schedule.qty_fees[qty] ?? 0}
-                              onChange={(e) => handleQtyFeeChange(qty, e.target.value)}
-                              min="0" step="0.5"
-                              className="input-field text-sm py-2"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-xs text-forest-600 mt-2 font-medium">
-                        ✓ {lang === 'ar' ? '5 وحدات أو أكثر: بدون عمولة' : '5+ units: No fee'}
-                      </p>
-                    </div>
-
-                    {/* State extras */}
-                    <div>
-                      <p className="text-xs text-tobacco-400 mb-2">{t('staff.fee_schedule_state_extra')}</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {UAE_STATES.map((state) => (
-                          <div key={state}>
-                            <label className="text-xs text-tobacco-400 mb-1 block">{t(`states.${state}`)}</label>
-                            <input
-                              type="number"
-                              value={form.marketer_fee_schedule.state_extras[state] ?? 0}
-                              onChange={(e) => handleStateExtraChange(state, e.target.value)}
-                              min="0" step="0.5"
-                              className="input-field text-sm py-2"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-xs text-tobacco-500 italic">
-                    {lang === 'ar'
-                      ? 'جدول العمولة غير مفعّل — ستُستخدم عمولة المنتج الافتراضية'
-                      : 'Fee schedule disabled — product-level fee will be used'}
-                  </p>
-                )}
               </div>
 
               {error && <div className="p-3 bg-red-900/50 border border-red-800 rounded-lg text-red-300 text-sm">{error}</div>}
@@ -299,16 +244,20 @@ export default function ManageOffers() {
                 <div>
                   <p className="font-medium text-cream-100">{lang === 'ar' ? offer.name_ar : offer.name_en}</p>
                   <p className="text-xs text-tobacco-500">{lang === 'ar' ? offer.name_en : offer.name_ar}</p>
-                  {offer.marketer_fee_schedule && (
-                    <span className="text-xs text-forest-600">✓ {lang === 'ar' ? 'جدول العمولة مفعّل' : 'Fee schedule active'}</span>
+                  {offer.marketer_fee_schedule ? (
+                    <span className="text-xs text-forest-500">
+                      ✓ {lang === 'ar' ? 'جدول العمولة: ' : 'Fees: '}
+                      {Object.entries(offer.marketer_fee_schedule.qty_fees)
+                        .map(([q, f]) => `${q}→${f}`)
+                        .join(' / ')} {lang === 'ar' ? 'د.إ' : 'AED'}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-tobacco-600">{lang === 'ar' ? 'لا يوجد جدول عمولة' : 'No fee schedule'}</span>
                   )}
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <Link
-                  to={`/staff/offers/${offer.id}/products`}
-                  className="btn-secondary text-sm py-1.5 px-3"
-                >
+                <Link to={`/staff/offers/${offer.id}/products`} className="btn-secondary text-sm py-1.5 px-3">
                   {t('staff.manage_products')}
                 </Link>
                 <button onClick={() => openEdit(offer)} className="btn-secondary text-sm py-1.5 px-3">{t('common.edit')}</button>

@@ -38,14 +38,14 @@ class OrderController extends Controller
             return response()->json(['message' => 'This product is currently unavailable.'], 422);
         }
 
-        $deliveryCost = $product->offer->getDeliveryCostForState($user->state);
         $promoDiscount = 0;
 
         if ($product->isPromoValid()) {
             $promoDiscount = $product->promo_discount ?? 0;
         }
 
-        $total = ($data['quantity'] * $product->unit_total_price) + $deliveryCost - $promoDiscount;
+        // Delivery cost is zero — the marketer fee schedule handles all state-based fees
+        $total = ($data['quantity'] * $product->unit_total_price) - $promoDiscount;
         $total = max(0, $total);
         $marketerFeeTotal = $product->offer->calculateMarketerFee(
             $data['quantity'],
