@@ -39,8 +39,12 @@ export default function OrderModal({ product, onClose, onSuccess }: Props) {
     new Date(product.promo_expiry) > new Date()
 
   const promoDiscount = isPromoValid ? (product.promo_discount || 0) : 0
-  // Delivery cost is now 0 — fee schedule replaces delivery costs per offer
-  const total = Math.max(0, quantity * product.unit_total_price - promoDiscount)
+
+  // Delivery cost = state_extra from the offer's fee schedule for the customer's state
+  const schedule = product.offer?.marketer_fee_schedule
+  const deliveryCost = schedule?.state_extras?.[user.state ?? ''] ?? 0
+
+  const total = Math.max(0, quantity * product.unit_total_price + deliveryCost - promoDiscount)
   const deliveryDate = new Date(Date.now() + 48 * 60 * 60 * 1000).toLocaleDateString(
     lang === 'ar' ? 'ar-AE' : 'en-AE'
   )
@@ -147,6 +151,12 @@ export default function OrderModal({ product, onClose, onSuccess }: Props) {
               <span>{quantity} × {product.unit_total_price.toFixed(2)} {t('common.aed')}</span>
               <span>{(quantity * product.unit_total_price).toFixed(2)} {t('common.aed')}</span>
             </div>
+            {deliveryCost > 0 && (
+              <div className="flex justify-between text-sm text-tobacco-400">
+                <span>{t('product.delivery_cost')}</span>
+                <span>+{deliveryCost.toFixed(2)} {t('common.aed')}</span>
+              </div>
+            )}
             {promoDiscount > 0 && (
               <div className="flex justify-between text-sm text-forest-600">
                 <span>{t('order.promo_code')}</span>

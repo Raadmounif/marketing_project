@@ -44,8 +44,11 @@ class OrderController extends Controller
             $promoDiscount = $product->promo_discount ?? 0;
         }
 
-        // Delivery cost is zero — the marketer fee schedule handles all state-based fees
-        $total = ($data['quantity'] * $product->unit_total_price) - $promoDiscount;
+        // Delivery cost = state_extra from the offer's fee schedule for the customer's state
+        $schedule = $product->offer->marketer_fee_schedule;
+        $deliveryCost = (float) ($schedule['state_extras'][$user->state] ?? 0);
+
+        $total = ($data['quantity'] * $product->unit_total_price) + $deliveryCost - $promoDiscount;
         $total = max(0, $total);
         $marketerFeeTotal = $product->offer->calculateMarketerFee(
             $data['quantity'],
