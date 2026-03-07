@@ -32,8 +32,9 @@ export default function Orders() {
       formData.append('receipt', file)
       const res = await ordersApi.uploadReceipt(orderId, formData)
       setOrders((prev) => prev.map((o) => o.id === orderId ? res.data : o))
-    } catch {
-      alert(t('common.error'))
+    } catch (err: any) {
+      const msg = err.response?.data?.message || t('common.error')
+      alert(msg)
     } finally {
       setUploadingId(null)
     }
