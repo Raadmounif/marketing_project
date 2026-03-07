@@ -17,6 +17,7 @@ import ManageProducts from './pages/staff/ManageProducts'
 import BoardEditor from './pages/staff/BoardEditor'
 import HowItWorksEditor from './pages/staff/HowItWorksEditor'
 import StaffNotifications from './pages/staff/Notifications'
+import OrderHistory from './pages/staff/OrderHistory'
 import StatisticsPage from './pages/Statistics'
 import AdminSettings from './pages/admin/Settings'
 import ManageUsers from './pages/admin/ManageUsers'
@@ -64,6 +65,9 @@ export default function App() {
                 } />
                 <Route path="/staff/notifications" element={
                   <ProtectedRoute roles={['staff', 'admin']}><StaffNotifications /></ProtectedRoute>
+                } />
+                <Route path="/staff/order-history" element={
+                  <ProtectedRoute roles={['staff', 'admin']}><OrderHistory /></ProtectedRoute>
                 } />
                 <Route path="/staff/statistics" element={
                   <ProtectedRoute roles={['staff', 'admin']}><StatisticsPage /></ProtectedRoute>

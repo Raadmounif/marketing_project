@@ -11,6 +11,7 @@ use App\Mail\ReceiptNotificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
@@ -38,6 +39,10 @@ class OrderController extends Controller
             return response()->json(['message' => 'This product is currently unavailable.'], 422);
         }
 
+        if (!$product->offer) {
+            return response()->json(['message' => 'This product is not linked to an offer. Please contact support.'], 422);
+        }
+
         $promoDiscount = 0;
 
         if ($product->isPromoValid()) {
@@ -45,7 +50,7 @@ class OrderController extends Controller
         }
 
         // Delivery fee = qty_fee + state_extra (for 5+ units: qty_fee=0, state_extra still applies)
-        $deliveryCost = $product->offer->getDeliveryFeeForOrder($data['quantity'], $user->state);
+        $deliveryCost = $product->offer->getDeliveryFeeForOrder($data['quantity'], $user->state ?? '');
 
         $total = ($data['quantity'] * $product->unit_total_price) + $deliveryCost - $promoDiscount;
         $total = max(0, $total);
@@ -77,13 +82,51 @@ class OrderController extends Controller
         $customerStatus = $ordersCount <= 1 ? 'جديد' : 'قديم';
 
         // Send order notification email
+        $notificationEmail = \App\Models\Setting::get('notification_email', 'raadmunif2@gmail.com');
+        $subject = "طلب جديد رقم {$order->order_number}";
+        $sent = false;
+
         try {
-            $notificationEmail = \App\Models\Setting::get('notification_email', 'raadmunif2@gmail.com');
             Mail::to($notificationEmail)->send(new OrderNotificationMail(
                 $order, $user, $product, $customerStatus
             ));
-        } catch (\Exception $e) {
-            \Log::error('Order email failed: ' . $e->getMessage());
+            $sent = true;
+        } catch (\Throwable $e) {
+            \Log::error('Order email failed: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'trace'     => $e->getTraceAsString(),
+                'order_id'  => $order->id,
+                'order_number' => $order->order_number,
+                'to'        => $notificationEmail,
+                'customer'  => $user->name . ' / ' . $user->phone,
+                'total'     => $order->total,
+            ]);
+        }
+
+        // Fallback: send via Resend API if Laravel mail failed and API key is set
+        if (!$sent && env('RESEND_API_KEY')) {
+            try {
+                $body = view('emails.order', [
+                    'orderNumber'    => $order->order_number,
+                    'offerCode'      => $product->offer->code ?? '-',
+                    'date'           => $order->created_at->format('Y-m-d H:i'),
+                    'customerName'   => $user->name,
+                    'customerPhone'  => $user->phone,
+                    'state'          => $user->state,
+                    'address'        => $user->address,
+                    'customerStatus' => $customerStatus,
+                    'productName'    => $product->name_ar,
+                    'quantity'       => $order->quantity,
+                    'total'          => number_format($order->total, 2),
+                    'marketerFee'    => number_format($order->marketer_fee_total, 2),
+                    'notes'          => $order->notes ?? '-',
+                ])->render();
+                // Resend allows onboarding@resend.dev without domain verification
+                $resend = self::sendViaResend($notificationEmail, $subject, $body, 'onboarding@resend.dev', 'Tobacco Market');
+                $sent = $resend;
+            } catch (\Throwable $e) {
+                \Log::error('Resend fallback failed: ' . $e->getMessage());
+            }
         }
 
         return response()->json($order->load('product.offer'), 201);
@@ -111,6 +154,25 @@ class OrderController extends Controller
 
     public function destroy(Request $request, Order $order): JsonResponse
     {
+        // Delete receipt file from storage if present
+        if ($order->receipt_path) {
+            try {
+                Storage::disk('public')->delete($order->receipt_path);
+            } catch (\Throwable $e) {
+                \Log::warning('Could not delete order receipt file: ' . $e->getMessage());
+            }
+        }
+
+        // If order was delivered, it contributed to statistics — decrement aggregates
+        if ($order->status === 'delivered') {
+            $stat = Statistic::first();
+            if ($stat) {
+                $stat->decrement('successful_orders_count');
+                $stat->decrement('cumulative_total', round($order->total, 2));
+                $stat->decrement('cumulative_marketer_fee', round($order->marketer_fee_total, 2));
+            }
+        }
+
         $order->delete();
         return response()->json(['message' => 'Order deleted.']);
     }
@@ -170,5 +232,23 @@ class OrderController extends Controller
         }
 
         return response()->json($order->fresh()->load('product.offer'));
+    }
+
+    /**
+     * Send email via Resend API (fallback when Laravel mail fails).
+     */
+    private static function sendViaResend(string $to, string $subject, string $text, string $fromAddress, string $fromName): bool
+    {
+        $key = env('RESEND_API_KEY');
+        if (!$key) {
+            return false;
+        }
+        $response = Http::withToken($key)->post('https://api.resend.com/emails', [
+            'from'    => $fromName . ' <' . $fromAddress . '>',
+            'to'      => [$to],
+            'subject' => $subject,
+            'text'    => $text,
+        ]);
+        return $response->successful();
     }
 }

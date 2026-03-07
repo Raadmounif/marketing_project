@@ -46,18 +46,20 @@ class Offer extends Model
     {
         $schedule = $this->marketer_fee_schedule;
 
-        if (!$schedule) {
+        if (!$schedule || !is_array($schedule)) {
             return 0.0;
         }
 
-        $stateExtra = (float) ($schedule['state_extras'][$state] ?? 0);
+        $stateExtras = $schedule['state_extras'] ?? [];
+        $stateExtra = (float) (is_array($stateExtras) ? ($stateExtras[$state] ?? 0) : 0);
 
         // 5+ units: no qty fee, only state extra
         if ($quantity >= 5) {
             return $stateExtra;
         }
 
-        $qtyFee = (float) ($schedule['qty_fees'][(string) $quantity] ?? 0);
+        $qtyFees = $schedule['qty_fees'] ?? [];
+        $qtyFee = (float) (is_array($qtyFees) ? ($qtyFees[(string) $quantity] ?? 0) : 0);
 
         return $qtyFee + $stateExtra;
     }
