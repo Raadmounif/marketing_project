@@ -97,7 +97,9 @@
     "feedback_submit": "إرسال التعليق",
     "feedback_submitted": "تم إرسال تعليقك، شكراً!",
     "delete_order": "حذف الطلب",
-    "confirm_delete_order": "هل أنت متأكد من حذف هذا الطلب؟"
+    "confirm_delete_order": "هل أنت متأكد من حذف هذا الطلب؟",
+    "remove_receipt": "حذف الإيصال وإعادة الرفع",
+    "confirm_delete_receipt": "إزالة هذا الإيصال لرفع إيصال آخر؟ سيعود الطلب إلى \"بانتظار رفع الإيصال\" ويمكنك الرفع مرة أخرى."
   },
   "favorites": {
     "title": "المفضلة",

@@ -97,7 +97,9 @@
     "feedback_submit": "Submit Feedback",
     "feedback_submitted": "Feedback submitted, thank you!",
     "delete_order": "Delete Order",
-    "confirm_delete_order": "Are you sure you want to delete this order?"
+    "confirm_delete_order": "Are you sure you want to delete this order?",
+    "remove_receipt": "Remove receipt & re-upload",
+    "confirm_delete_receipt": "Remove this receipt so you can upload a different one? The order will return to \"Awaiting receipt\" and you can upload again."
   },
   "favorites": {
     "title": "Favorites",

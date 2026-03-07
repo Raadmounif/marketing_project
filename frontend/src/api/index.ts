@@ -12,6 +12,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  // Let the browser set Content-Type (with boundary) for FormData
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  }
   return config
 })
 
@@ -68,10 +72,12 @@ export const ordersApi = {
   create: (data: object) => api.post('/orders', data),
   myOrders: () => api.get('/my-orders'),
   all: () => api.get('/orders'),
-  uploadReceipt: (orderId: number, data: FormData) =>
-    api.post(`/orders/${orderId}/receipt`, data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+  uploadReceipt: (orderId: number, data: FormData) => {
+    return api.post(`/orders/${orderId}/receipt`, data)
+  },
+  deleteReceipt: (orderId: number) => api.delete(`/orders/${orderId}/receipt`),
+  getReceiptBlob: (orderId: number) =>
+    api.get(`/orders/${orderId}/receipt-file`, { responseType: 'blob' }).then((r) => r.data as Blob),
   submitFeedback: (orderId: number, feedback: string) =>
     api.patch(`/orders/${orderId}/feedback`, { feedback }),
   deleteOrder: (orderId: number) => api.delete(`/orders/${orderId}`),

@@ -200,8 +200,12 @@ class OrderController extends Controller
 
     public function uploadReceipt(Request $request, Order $order): JsonResponse
     {
-        if ($order->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Forbidden.'], 403);
+        $userId = (int) $request->user()->id;
+        $orderUserId = (int) $order->user_id;
+        if ($orderUserId !== $userId) {
+            return response()->json([
+                'message' => 'You can only upload a receipt for your own order.',
+            ], 403);
         }
 
         if ($order->status === 'delivered') {
@@ -232,6 +236,72 @@ class OrderController extends Controller
         }
 
         return response()->json($order->fresh()->load('product.offer'));
+    }
+
+    /**
+     * Remove receipt so customer can re-upload (order owner only).
+     * Deletes file, sets status back to 'ordered', and reverses statistics.
+     */
+    public function deleteReceipt(Request $request, Order $order): JsonResponse
+    {
+        $userId = (int) $request->user()->id;
+        $orderUserId = (int) $order->user_id;
+        if ($orderUserId !== $userId) {
+            return response()->json(['message' => 'You can only remove the receipt for your own order.'], 403);
+        }
+        if ($order->status !== 'delivered' || !$order->receipt_path) {
+            return response()->json(['message' => 'No receipt to remove.'], 422);
+        }
+
+        if (Storage::disk('public')->exists($order->receipt_path)) {
+            try {
+                Storage::disk('public')->delete($order->receipt_path);
+            } catch (\Throwable $e) {
+                \Log::warning('Could not delete receipt file: ' . $e->getMessage());
+            }
+        }
+
+        $stat = Statistic::first();
+        if ($stat) {
+            $stat->decrement('successful_orders_count');
+            $stat->decrement('cumulative_total', round($order->total, 2));
+            $stat->decrement('cumulative_marketer_fee', round($order->marketer_fee_total, 2));
+        }
+
+        $order->update([
+            'receipt_path'        => null,
+            'receipt_uploaded_at' => null,
+            'status'              => 'ordered',
+        ]);
+
+        return response()->json($order->fresh()->load('product.offer'));
+    }
+
+    /**
+     * Serve receipt file (so viewing works without public storage link on cPanel).
+     * Allowed: order owner or staff/admin.
+     */
+    public function receiptFile(Request $request, Order $order)
+    {
+        if (!$order->receipt_path) {
+            abort(404);
+        }
+        $user = $request->user();
+        $isOwner = (int) $order->user_id === (int) $user->id;
+        $isStaffOrAdmin = in_array($user->role ?? '', ['staff', 'admin'], true);
+        if (!$isOwner && !$isStaffOrAdmin) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+        if (!Storage::disk('public')->exists($order->receipt_path)) {
+            abort(404);
+        }
+        $content = Storage::disk('public')->get($order->receipt_path);
+        $mime = Storage::disk('public')->mimeType($order->receipt_path) ?: 'application/octet-stream';
+        $name = basename($order->receipt_path);
+        return response($content, 200, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' . $name . '"',
+        ]);
     }
 
     /**

@@ -16,6 +16,7 @@ export default function Orders() {
   const [submittingFeedback, setSubmittingFeedback] = useState<number | null>(null)
   const [feedbackDone, setFeedbackDone] = useState<Record<number, boolean>>({})
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deletingReceiptId, setDeletingReceiptId] = useState<number | null>(null)
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
   const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || ''
@@ -32,8 +33,9 @@ export default function Orders() {
       formData.append('receipt', file)
       const res = await ordersApi.uploadReceipt(orderId, formData)
       setOrders((prev) => prev.map((o) => o.id === orderId ? res.data : o))
-    } catch {
-      alert(t('common.error'))
+    } catch (err: any) {
+      const msg = err.response?.data?.message || t('common.error')
+      alert(msg)
     } finally {
       setUploadingId(null)
     }
@@ -64,6 +66,20 @@ export default function Orders() {
       alert(t('common.error'))
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleDeleteReceipt = async (orderId: number) => {
+    if (!confirm(t('tracking.confirm_delete_receipt'))) return
+    setDeletingReceiptId(orderId)
+    try {
+      const res = await ordersApi.deleteReceipt(orderId)
+      const updated = res.data
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)))
+    } catch (err: any) {
+      alert(err.response?.data?.message || t('common.error'))
+    } finally {
+      setDeletingReceiptId(null)
     }
   }
 
@@ -158,20 +174,37 @@ export default function Orders() {
               {/* Delivered: show receipt link + feedback form */}
               {order.status === 'delivered' && (
                 <div className="border-t border-tobacco-700 pt-4 space-y-4">
-                  <div className="flex items-center gap-2 text-forest-600">
+                  <div className="flex flex-wrap items-center gap-2 text-forest-600">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span className="text-sm font-medium">{t('tracking.receipt_uploaded')}</span>
                     {order.receipt_path && (
-                      <a
-                        href={`${apiBase}/storage/${order.receipt_path}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-gold-400 text-sm hover:underline ms-2"
-                      >
-                        {lang === 'ar' ? 'عرض الإيصال' : 'View Receipt'}
-                      </a>
+                      <>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const blob = await ordersApi.getReceiptBlob(order.id)
+                              const u = URL.createObjectURL(blob)
+                              window.open(u)
+                            } catch {
+                              alert(t('common.error'))
+                            }
+                          }}
+                          className="text-gold-400 text-sm hover:underline"
+                        >
+                          {lang === 'ar' ? 'عرض الإيصال' : 'View Receipt'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReceipt(order.id)}
+                          disabled={deletingReceiptId === order.id}
+                          className="text-red-400 text-sm hover:underline disabled:opacity-50"
+                        >
+                          {deletingReceiptId === order.id ? t('common.loading') : t('tracking.remove_receipt')}
+                        </button>
+                      </>
                     )}
                   </div>
 

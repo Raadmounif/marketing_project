@@ -34,6 +34,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-orders', [OrderController::class, 'myOrders']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::post('/orders/{order}/receipt', [OrderController::class, 'uploadReceipt']);
+    Route::delete('/orders/{order}/receipt', [OrderController::class, 'deleteReceipt']);
+    Route::get('/orders/{order}/receipt-file', [OrderController::class, 'receiptFile']);
     Route::patch('/orders/{order}/feedback', [OrderController::class, 'submitFeedback']);
 
     // Favorites

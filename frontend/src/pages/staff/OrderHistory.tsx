@@ -6,7 +6,6 @@ import { ordersApi } from '../../api'
 import type { Order } from '../../types'
 
 const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || ''
-const storageBase = import.meta.env.VITE_STORAGE_URL || apiBase
 
 // Date as YYYY-MM-DD HH:mm (matches email format)
 const dateFmtForCopy = (date: string) => {
@@ -239,27 +238,35 @@ export default function OrderHistory() {
                 </h2>
                 {order.receipt_path ? (
                   <div className="rounded-xl overflow-hidden border border-tobacco-600 bg-tobacco-900 max-w-md">
-                    <a
-                      href={`${storageBase}/storage/${order.receipt_path}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block focus:ring-2 ring-gold-500 rounded-xl"
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const blob = await ordersApi.getReceiptBlob(order.id)
+                          const u = URL.createObjectURL(blob)
+                          window.open(u)
+                        } catch {
+                          alert(t('common.error'))
+                        }
+                      }}
+                      className="w-full p-6 flex flex-col items-center justify-center gap-2 text-gold-400 hover:bg-tobacco-800 transition-colors focus:ring-2 ring-gold-500 rounded-xl"
                     >
                       {order.receipt_path.toLowerCase().match(/\.(pdf)$/) ? (
-                        <div className="p-6 flex items-center justify-center gap-2 text-gold-400">
+                        <>
                           <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                           </svg>
                           <span>{t('staff.view_receipt_pdf')}</span>
-                        </div>
+                        </>
                       ) : (
-                        <img
-                          src={`${storageBase}/storage/${order.receipt_path}`}
-                          alt={t('staff.receipt_alt') + ' ' + order.order_number}
-                          className="w-full h-auto max-h-80 object-contain"
-                        />
+                        <>
+                          <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+                          </svg>
+                          <span>{lang === 'ar' ? 'عرض الإيصال' : 'View Receipt'}</span>
+                        </>
                       )}
-                    </a>
+                    </button>
                     {order.receipt_uploaded_at && (
                       <p className="p-2 text-xs text-tobacco-500 text-center border-t border-tobacco-700">
                         {t('tracking.receipt_uploaded')} — {dateFmt(order.receipt_uploaded_at)}
