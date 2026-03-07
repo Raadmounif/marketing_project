@@ -12,9 +12,6 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
-  if (config.data instanceof FormData) {
-    delete config.headers['Content-Type']
-  }
   return config
 })
 
@@ -72,7 +69,9 @@ export const ordersApi = {
   myOrders: () => api.get('/my-orders'),
   all: () => api.get('/orders'),
   uploadReceipt: (orderId: number, data: FormData) =>
-    api.post(`/orders/${orderId}/receipt`, data),
+    api.post(`/orders/${orderId}/receipt`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   submitFeedback: (orderId: number, feedback: string) =>
     api.patch(`/orders/${orderId}/feedback`, { feedback }),
   deleteOrder: (orderId: number) => api.delete(`/orders/${orderId}`),

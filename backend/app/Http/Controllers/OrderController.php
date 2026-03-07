@@ -146,29 +146,11 @@ class OrderController extends Controller
             return response()->json(['message' => 'Receipt already uploaded.'], 422);
         }
 
-        try {
-            $request->validate([
-                'receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            ], [
-                'receipt.required' => 'Please select a file to upload.',
-                'receipt.file'     => 'Invalid file.',
-                'receipt.mimes'    => 'File must be JPG, PNG, or PDF.',
-                'receipt.max'      => 'File must be 5 MB or less.',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => $e->validator->errors()->first('receipt'),
-            ], 422);
-        }
+        $request->validate([
+            'receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
 
-        try {
-            $path = $request->file('receipt')->store('receipts', 'public');
-        } catch (\Exception $e) {
-            \Log::error('Receipt storage failed: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Upload failed. Please try again or contact support.',
-            ], 500);
-        }
+        $path = $request->file('receipt')->store('receipts', 'public');
 
         $order->update([
             'receipt_path'        => $path,
