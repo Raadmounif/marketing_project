@@ -44,9 +44,8 @@ class OrderController extends Controller
             $promoDiscount = $product->promo_discount ?? 0;
         }
 
-        // Delivery cost = state_extra from the offer's fee schedule for the customer's state
-        $schedule = $product->offer->marketer_fee_schedule;
-        $deliveryCost = (float) ($schedule['state_extras'][$user->state] ?? 0);
+        // Delivery fee = qty_fee + state_extra (for 5+ units: qty_fee=0, state_extra still applies)
+        $deliveryCost = $product->offer->getDeliveryFeeForOrder($data['quantity'], $user->state);
 
         $total = ($data['quantity'] * $product->unit_total_price) + $deliveryCost - $promoDiscount;
         $total = max(0, $total);

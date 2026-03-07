@@ -40,9 +40,12 @@ export default function OrderModal({ product, onClose, onSuccess }: Props) {
 
   const promoDiscount = isPromoValid ? (product.promo_discount || 0) : 0
 
-  // Delivery cost = state_extra from the offer's fee schedule for the customer's state
+  // Delivery fee = qty_fee + state_extra (for 5+ units: qty_fee=0, state_extra still applies)
   const schedule = product.offer?.marketer_fee_schedule
-  const deliveryCost = schedule?.state_extras?.[user.state ?? ''] ?? 0
+  const stateExtra = Number(schedule?.state_extras?.[user.state ?? ''] ?? 0)
+  const qtyFee =
+    quantity >= 5 ? 0 : Number(schedule?.qty_fees?.[String(quantity)] ?? 0)
+  const deliveryCost = qtyFee + stateExtra
 
   const total = Math.max(0, quantity * product.unit_total_price + deliveryCost - promoDiscount)
   const deliveryDate = new Date(Date.now() + 48 * 60 * 60 * 1000).toLocaleDateString(

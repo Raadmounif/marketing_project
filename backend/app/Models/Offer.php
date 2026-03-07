@@ -39,8 +39,31 @@ class Offer extends Model
     }
 
     /**
-     * Calculate marketer fee for a given quantity and customer state.
-     * Uses the offer-level fee schedule if set, falls back to per-product fee.
+     * Get delivery fee for customer (qty_fee + state_extra).
+     * For 5+ units: qty_fee = 0, but state_extra still applies.
+     */
+    public function getDeliveryFeeForOrder(int $quantity, string $state): float
+    {
+        $schedule = $this->marketer_fee_schedule;
+
+        if (!$schedule) {
+            return 0.0;
+        }
+
+        $stateExtra = (float) ($schedule['state_extras'][$state] ?? 0);
+
+        // 5+ units: no qty fee, only state extra
+        if ($quantity >= 5) {
+            return $stateExtra;
+        }
+
+        $qtyFee = (float) ($schedule['qty_fees'][(string) $quantity] ?? 0);
+
+        return $qtyFee + $stateExtra;
+    }
+
+    /**
+     * Calculate marketer fee (= delivery fee) for a given quantity and customer state.
      */
     public function calculateMarketerFee(int $quantity, string $state, float $fallbackPerUnit): float
     {
@@ -50,14 +73,6 @@ class Offer extends Model
             return $quantity * $fallbackPerUnit;
         }
 
-        // 5+ units: no fee
-        if ($quantity >= 5) {
-            return 0.0;
-        }
-
-        $qtyFee    = (float) ($schedule['qty_fees'][(string) $quantity] ?? 0);
-        $stateExtra = (float) ($schedule['state_extras'][$state] ?? 0);
-
-        return $qtyFee + $stateExtra;
+        return $this->getDeliveryFeeForOrder($quantity, $state);
     }
 }
