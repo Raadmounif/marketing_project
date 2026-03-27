@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLang } from '../contexts/LangContext'
 import { useAuth } from '../contexts/AuthContext'
 import { favoritesApi } from '../api'
+import { getStorageBase } from '../utils/storage'
 import type { Product } from '../types'
 
 interface Props {
@@ -23,7 +24,7 @@ export default function ProductCard({ product, isFavorited = false, onFavoriteCh
   const [imgError, setImgError] = useState(false)
 
   const name = lang === 'ar' ? product.name_ar : product.name_en
-  const storageBase = import.meta.env.VITE_STORAGE_URL || import.meta.env.VITE_API_URL?.replace('/api', '/storage') || ''
+  const storageBase = getStorageBase()
   const firstPhoto = product.photos?.[0]
     ? `${storageBase}/${product.photos[0]}`
     : null

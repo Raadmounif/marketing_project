@@ -9,6 +9,7 @@ import 'swiper/css/navigation'
 import { offersApi, boardApi, hiwApi } from '../api'
 import { useLang } from '../contexts/LangContext'
 import { useAuth } from '../contexts/AuthContext'
+import { getStorageBase } from '../utils/storage'
 import ProductCard from '../components/ProductCard'
 import OrderModal from '../components/OrderModal'
 import type { Offer, Product, AdvertisingBoard, HowItWorksItem } from '../types'
@@ -28,7 +29,7 @@ export default function Landing() {
   const [favoritedIds, setFavoritedIds] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
 
-  const storageBase = import.meta.env.VITE_STORAGE_URL || import.meta.env.VITE_API_URL?.replace('/api', '/storage') || ''
+  const storageBase = getStorageBase()
 
   useEffect(() => {
     Promise.all([offersApi.list(), boardApi.list(), hiwApi.list()])

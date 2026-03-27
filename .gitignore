@@ -28,6 +28,10 @@ frontend/.env.production
 # ========================
 _deploy_staging/
 
+deploy/node_modules/
+deploy/.env
+deploy/composer.phar.download
+
 # ========================
 # IDE / OS
 # ========================

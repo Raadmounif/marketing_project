@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useLang } from '../contexts/LangContext'
 import { ordersApi } from '../api'
 import { useAuth } from '../contexts/AuthContext'
+import { getStorageBase } from '../utils/storage'
 import type { Order } from '../types'
 
 export default function Orders() {
@@ -19,7 +20,7 @@ export default function Orders() {
   const [deletingReceiptId, setDeletingReceiptId] = useState<number | null>(null)
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
-  const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || ''
+  const storageBase = getStorageBase()
   const isAdmin = user?.role === 'admin'
 
   useEffect(() => {
@@ -207,6 +208,21 @@ export default function Orders() {
                       </>
                     )}
                   </div>
+
+                  {order.receipt_path && !order.receipt_path.toLowerCase().endsWith('.pdf') && (
+                    <a
+                      href={`${storageBase}/${order.receipt_path}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block w-full max-w-xs"
+                    >
+                      <img
+                        src={`${storageBase}/${order.receipt_path}`}
+                        alt="Receipt"
+                        className="w-full h-40 object-cover rounded-lg border border-tobacco-700"
+                      />
+                    </a>
+                  )}
 
                   {/* Feedback section */}
                   {order.feedback ? (

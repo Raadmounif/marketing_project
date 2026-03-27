@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { useLang } from '../../contexts/LangContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { ordersApi } from '../../api'
+import { getStorageBase } from '../../utils/storage'
 import type { Order } from '../../types'
 
-const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || ''
+const storageBase = getStorageBase()
 
 // Date as YYYY-MM-DD HH:mm (matches email format)
 const dateFmtForCopy = (date: string) => {
@@ -238,6 +239,15 @@ export default function OrderHistory() {
                 </h2>
                 {order.receipt_path ? (
                   <div className="rounded-xl overflow-hidden border border-tobacco-600 bg-tobacco-900 max-w-md">
+                    {!order.receipt_path.toLowerCase().endsWith('.pdf') && (
+                      <a href={`${storageBase}/${order.receipt_path}`} target="_blank" rel="noreferrer" className="block">
+                        <img
+                          src={`${storageBase}/${order.receipt_path}`}
+                          alt="Receipt"
+                          className="w-full max-h-64 object-cover border-b border-tobacco-700"
+                        />
+                      </a>
+                    )}
                     <button
                       type="button"
                       onClick={async () => {

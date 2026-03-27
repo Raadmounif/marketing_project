@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useLang } from '../../contexts/LangContext'
 import { offersApi, productsApi } from '../../api'
+import { getStorageBase } from '../../utils/storage'
 import CalculatorField from '../../components/CalculatorField'
 import type { Offer, Product } from '../../types'
 
@@ -116,7 +117,7 @@ export default function ManageProducts() {
     }
   }
 
-  const storageBase = import.meta.env.VITE_STORAGE_URL || import.meta.env.VITE_API_URL?.replace('/api', '/storage') || ''
+  const storageBase = getStorageBase()
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 animate-fade-in">

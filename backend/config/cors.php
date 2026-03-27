@@ -4,7 +4,8 @@ return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
     'allowed_origins' => [
-        env('FRONTEND_URL', 'https://yourdomain.com'),
+        env('FRONTEND_URL', 'https://puffplaza.com'),
+        'https://www.puffplaza.com',
         'http://localhost:5173',
         'http://localhost:3000',
     ],

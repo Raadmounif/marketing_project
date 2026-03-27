@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useLang } from '../../contexts/LangContext'
 import { boardApi } from '../../api'
+import { getStorageBase } from '../../utils/storage'
 import type { AdvertisingBoard } from '../../types'
 
 export default function BoardEditor() {
@@ -16,7 +17,7 @@ export default function BoardEditor() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || ''
+  const storageBase = getStorageBase()
 
   useEffect(() => {
     boardApi.list().then((res) => setItems(res.data)).finally(() => setLoading(false))
@@ -129,7 +130,7 @@ export default function BoardEditor() {
           {items.sort((a, b) => a.sort_order - b.sort_order).map((item) => (
             <div key={item.id} className="card p-4 flex gap-4">
               {item.image_path && (
-                <img src={`${apiBase}/storage/${item.image_path}`} alt="" className="w-20 h-16 object-cover rounded-lg flex-shrink-0" />
+                <img src={`${storageBase}/${item.image_path}`} alt="" className="w-20 h-16 object-cover rounded-lg flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-cream-100 font-medium truncate">{lang === 'ar' ? item.content_ar : item.content_en}</p>
