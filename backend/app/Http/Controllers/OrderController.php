@@ -33,7 +33,7 @@ class OrderController extends Controller
             ], 422);
         }
 
-        $product = Product::with('offer')->findOrFail($data['product_id']);
+        $product = Product::with('offer', 'section')->findOrFail($data['product_id']);
 
         if (!$product->is_active) {
             return response()->json(['message' => 'This product is currently unavailable.'], 422);
@@ -54,11 +54,10 @@ class OrderController extends Controller
 
         $total = ($data['quantity'] * $product->unit_total_price) + $deliveryCost - $promoDiscount;
         $total = max(0, $total);
-        $marketerFeeTotal = $product->offer->calculateMarketerFee(
-            $data['quantity'],
-            $user->state,
-            $product->marketer_fee_per_unit
-        );
+        $effectiveFeePerUnit = $product->getEffectiveMarketerFeePerUnit();
+        // Marketer fee total should always reflect per-unit fee source
+        // (section default when set, otherwise product value).
+        $marketerFeeTotal = round($data['quantity'] * $effectiveFeePerUnit, 2);
         $deliveryDate = now()->addDays(2)->toDateString();
 
         $order = DB::transaction(function () use ($data, $user, $product, $total, $marketerFeeTotal, $deliveryDate) {

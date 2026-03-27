@@ -35,6 +35,17 @@ export interface MarketerFeeSchedule {
   state_extras: Record<string, number>
 }
 
+export interface OfferSection {
+  id: number
+  offer_id: number
+  name_ar: string
+  name_en: string
+  sort_order: number
+  marketer_fee_per_unit: number | null
+  products?: Product[]
+  created_at?: string
+}
+
 export interface Offer {
   id: number
   name_ar: string
@@ -43,6 +54,7 @@ export interface Offer {
   delivery_costs: Record<string, number>
   marketer_fee_schedule: MarketerFeeSchedule | null
   is_active: boolean
+  sections?: OfferSection[]
   products?: Product[]
   active_products?: Product[]
   created_at: string
@@ -51,6 +63,7 @@ export interface Offer {
 export interface Product {
   id: number
   offer_id: number
+  section_id: number
   name_ar: string
   name_en: string
   photos: string[] | null

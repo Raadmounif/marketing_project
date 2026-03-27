@@ -2,6 +2,7 @@
  * Run a single shell command on the remote host (same credentials as SFTP).
  */
 import { Client } from 'ssh2'
+import { sshCompatAlgorithms } from './ssh-compat.mjs'
 
 /**
  * @param {{ host: string, port: number, username: string, password?: string, privateKey?: Buffer }} config
@@ -51,6 +52,7 @@ export function sshExec(config, command) {
         password: config.password,
         privateKey: config.privateKey,
         readyTimeout: 300000,
+        algorithms: config.algorithms ?? sshCompatAlgorithms,
       })
   })
 }

@@ -257,8 +257,8 @@ export default function ManageOffers() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <Link to={`/staff/offers/${offer.id}/products`} className="btn-secondary text-sm py-1.5 px-3">
-                  {t('staff.manage_products')}
+                <Link to={`/staff/offers/${offer.id}/sections`} className="btn-secondary text-sm py-1.5 px-3">
+                  {t('staff.manage_sections')}
                 </Link>
                 <button onClick={() => openEdit(offer)} className="btn-secondary text-sm py-1.5 px-3">{t('common.edit')}</button>
                 <button onClick={() => handleDelete(offer.id)} className="btn-danger text-sm py-1.5 px-3">{t('common.delete')}</button>

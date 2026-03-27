@@ -49,12 +49,24 @@ export const offersApi = {
   delete: (id: number) => api.delete(`/offers/${id}`),
 }
 
+// Offer sections (staff)
+export const sectionsApi = {
+  list: (offerId: number) => api.get(`/offers/${offerId}/sections`),
+  create: (offerId: number, data: object) => api.post(`/offers/${offerId}/sections`, data),
+  update: (offerId: number, sectionId: number, data: object) =>
+    api.put(`/offers/${offerId}/sections/${sectionId}`, data),
+  delete: (offerId: number, sectionId: number) =>
+    api.delete(`/offers/${offerId}/sections/${sectionId}`),
+}
+
 // Products
 export const productsApi = {
-  list: (offerId: number, search?: string) =>
+  list: (offerId: number, sectionId: number, search?: string) =>
+    api.get(`/offers/${offerId}/sections/${sectionId}/products`, { params: { search } }),
+  listOffer: (offerId: number, search?: string) =>
     api.get(`/offers/${offerId}/products`, { params: { search } }),
-  create: (offerId: number, data: FormData) =>
-    api.post(`/offers/${offerId}/products`, data, {
+  create: (offerId: number, sectionId: number, data: FormData) =>
+    api.post(`/offers/${offerId}/sections/${sectionId}/products`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
   update: (id: number, data: FormData) =>
@@ -65,6 +77,8 @@ export const productsApi = {
   toggle: (id: number) => api.patch(`/products/${id}/toggle`),
   bulkUpdate: (offerId: number, data: object) =>
     api.post(`/offers/${offerId}/products/bulk-update`, data),
+  bulkUpdateSection: (offerId: number, sectionId: number, data: object) =>
+    api.post(`/offers/${offerId}/sections/${sectionId}/products/bulk-update`, data),
 }
 
 // Orders

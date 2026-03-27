@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { LangProvider } from './contexts/LangContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -13,6 +13,7 @@ import Orders from './pages/Orders'
 import Favorites from './pages/Favorites'
 import StaffDashboard from './pages/staff/Dashboard'
 import ManageOffers from './pages/staff/ManageOffers'
+import ManageSections from './pages/staff/ManageSections'
 import ManageProducts from './pages/staff/ManageProducts'
 import BoardEditor from './pages/staff/BoardEditor'
 import HowItWorksEditor from './pages/staff/HowItWorksEditor'
@@ -21,6 +22,11 @@ import OrderHistory from './pages/staff/OrderHistory'
 import StatisticsPage from './pages/Statistics'
 import AdminSettings from './pages/admin/Settings'
 import ManageUsers from './pages/admin/ManageUsers'
+
+function RedirectOfferProductsToSections() {
+  const { offerId } = useParams()
+  return <Navigate to={`/staff/offers/${offerId}/sections`} replace />
+}
 
 export default function App() {
   return (
@@ -55,6 +61,12 @@ export default function App() {
                   <ProtectedRoute roles={['staff', 'admin']}><ManageOffers /></ProtectedRoute>
                 } />
                 <Route path="/staff/offers/:offerId/products" element={
+                  <ProtectedRoute roles={['staff', 'admin']}><RedirectOfferProductsToSections /></ProtectedRoute>
+                } />
+                <Route path="/staff/offers/:offerId/sections" element={
+                  <ProtectedRoute roles={['staff', 'admin']}><ManageSections /></ProtectedRoute>
+                } />
+                <Route path="/staff/offers/:offerId/sections/:sectionId/products" element={
                   <ProtectedRoute roles={['staff', 'admin']}><ManageProducts /></ProtectedRoute>
                 } />
                 <Route path="/staff/board" element={

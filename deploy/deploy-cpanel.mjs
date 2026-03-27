@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
 import dotenv from 'dotenv'
 import SftpClient from 'ssh2-sftp-client'
+import { sshCompatAlgorithms } from './lib/ssh-compat.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..')
@@ -70,6 +71,7 @@ const config = {
   port: Number(process.env.SFTP_PORT || 22),
   username: process.env.SFTP_USER.trim(),
   readyTimeout: 300000,
+  algorithms: sshCompatAlgorithms,
 }
 if (process.env.SFTP_KEY_PATH) {
   config.privateKey = fs.readFileSync(process.env.SFTP_KEY_PATH.trim())

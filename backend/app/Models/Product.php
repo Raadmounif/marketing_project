@@ -10,7 +10,7 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'offer_id', 'name_ar', 'name_en', 'photos',
+        'offer_id', 'section_id', 'name_ar', 'name_en', 'photos',
         'promo_code', 'promo_expiry', 'promo_discount',
         'unit_total_price', 'marketer_fee_per_unit', 'is_active',
     ];
@@ -33,6 +33,11 @@ class Product extends Model
         return $this->belongsTo(Offer::class);
     }
 
+    public function section()
+    {
+        return $this->belongsTo(OfferSection::class, 'section_id');
+    }
+
     public function favorites()
     {
         return $this->hasMany(Favorite::class);
@@ -49,5 +54,15 @@ class Product extends Model
             return false;
         }
         return $this->promo_expiry->isFuture();
+    }
+
+    public function getEffectiveMarketerFeePerUnit(): float
+    {
+        $sectionFee = $this->section?->marketer_fee_per_unit;
+        if ($sectionFee !== null) {
+            return (float) $sectionFee;
+        }
+
+        return (float) $this->marketer_fee_per_unit;
     }
 }

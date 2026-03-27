@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OfferController;
+use App\Http\Controllers\OfferSectionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\FavoriteController;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 // Public endpoints
 Route::get('/offers', [OfferController::class, 'index']);
 Route::get('/offers/{offer}', [OfferController::class, 'show']);
+Route::get('/offers/{offer}/sections/{section}/products', [ProductController::class, 'index']);
 Route::get('/offers/{offer}/products', [ProductController::class, 'index']);
 Route::get('/advertising-boards', [BoardController::class, 'index']);
 Route::get('/how-it-works', [HowItWorksController::class, 'index']);
@@ -57,11 +59,17 @@ Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
     Route::put('/offers/{offer}', [OfferController::class, 'update']);
     Route::delete('/offers/{offer}', [OfferController::class, 'destroy']);
 
-    Route::post('/offers/{offer}/products', [ProductController::class, 'store']);
-    Route::put('/products/{product}', [ProductController::class, 'update']);
+    Route::post('/offers/{offer}/sections/{section}/products', [ProductController::class, 'store']);
+    Route::match(['put', 'post'], '/products/{product}', [ProductController::class, 'update']);
     Route::delete('/products/{product}', [ProductController::class, 'destroy']);
     Route::patch('/products/{product}/toggle', [ProductController::class, 'toggleActive']);
     Route::post('/offers/{offer}/products/bulk-update', [ProductController::class, 'bulkUpdate']);
+    Route::post('/offers/{offer}/sections/{section}/products/bulk-update', [ProductController::class, 'bulkUpdateSection']);
+
+    Route::get('/offers/{offer}/sections', [OfferSectionController::class, 'index']);
+    Route::post('/offers/{offer}/sections', [OfferSectionController::class, 'store']);
+    Route::put('/offers/{offer}/sections/{section}', [OfferSectionController::class, 'update']);
+    Route::delete('/offers/{offer}/sections/{section}', [OfferSectionController::class, 'destroy']);
 
     Route::post('/advertising-boards', [BoardController::class, 'store']);
     Route::put('/advertising-boards/{board}', [BoardController::class, 'update']);

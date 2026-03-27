@@ -12,7 +12,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { getStorageBase } from '../utils/storage'
 import ProductCard from '../components/ProductCard'
 import OrderModal from '../components/OrderModal'
-import type { Offer, Product, AdvertisingBoard, HowItWorksItem } from '../types'
+import type { Offer, OfferSection, Product, AdvertisingBoard, HowItWorksItem } from '../types'
 
 export default function Landing() {
   const { t } = useTranslation()
@@ -200,24 +200,30 @@ export default function Landing() {
           ) : selectedOffer === 'all' ? (
             <div className="space-y-12">
               {offers.map((offer) => {
-                const products = (offer.products || []).filter((p) =>
-                  !search || p.name_ar.includes(search) || p.name_en.toLowerCase().includes(search.toLowerCase())
-                )
-                if (products.length === 0 && search) return null
-                return (
-                  <div key={offer.id}>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-1 h-8 bg-gold-500 rounded-full" />
-                      <h3 className="text-xl font-bold text-cream-100">
-                        {lang === 'ar' ? offer.name_ar : offer.name_en}
-                      </h3>
-                      <span className="text-tobacco-500 text-sm px-2 py-0.5 bg-tobacco-800 rounded-md">
-                        {offer.code}
-                      </span>
-                    </div>
-                    {products.length === 0 ? (
-                      <p className="text-tobacco-500 text-sm py-4">{t('landing.no_products')}</p>
-                    ) : (
+                const sections: OfferSection[] =
+                  offer.sections && offer.sections.length > 0
+                    ? offer.sections
+                    : [{ id: 0, name_ar: '', name_en: '', sort_order: 0, marketer_fee_per_unit: null, offer_id: offer.id, products: offer.products ?? [] }]
+
+                let anySectionVisible = false
+                const sectionBlocks = sections.map((section) => {
+                  const products = (section.products || []).filter((p) =>
+                    !search || p.name_ar.includes(search) || p.name_en.toLowerCase().includes(search.toLowerCase())
+                  )
+                  if (products.length === 0) {
+                    if (search) return null
+                    return null
+                  }
+                  anySectionVisible = true
+                  const showSectionTitle = section.name_ar.length > 0 || section.name_en.length > 0
+                  return (
+                    <div key={`${offer.id}-${section.id}`} className="mb-10 last:mb-0">
+                      {showSectionTitle && (
+                        <h4 className="text-sm font-semibold text-gold-500 mb-4 flex items-center gap-2">
+                          <span className="w-1 h-8 bg-gold-500/60 rounded-full" />
+                          {lang === 'ar' ? section.name_ar : section.name_en}
+                        </h4>
+                      )}
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {products.map((product) => (
                           <ProductCard
@@ -235,6 +241,27 @@ export default function Landing() {
                           />
                         ))}
                       </div>
+                    </div>
+                  )
+                })
+
+                if (!anySectionVisible && search) return null
+
+                return (
+                  <div key={offer.id}>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-1 h-8 bg-gold-500 rounded-full" />
+                      <h3 className="text-xl font-bold text-cream-100">
+                        {lang === 'ar' ? offer.name_ar : offer.name_en}
+                      </h3>
+                      <span className="text-tobacco-500 text-sm px-2 py-0.5 bg-tobacco-800 rounded-md">
+                        {offer.code}
+                      </span>
+                    </div>
+                    {!anySectionVisible ? (
+                      <p className="text-tobacco-500 text-sm py-4">{t('landing.no_products')}</p>
+                    ) : (
+                      <div>{sectionBlocks}</div>
                     )}
                   </div>
                 )

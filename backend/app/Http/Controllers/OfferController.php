@@ -12,16 +12,30 @@ class OfferController extends Controller
     {
         // Return all products (including inactive) so the frontend can show "out of stock"
         $offers = Offer::where('is_active', true)
-            ->with(['products'])
+            ->with([
+                'sections' => fn ($q) => $q->orderBy('sort_order'),
+                'sections.products' => fn ($q) => $q->orderBy('created_at', 'desc'),
+            ])
             ->orderBy('created_at', 'desc')
             ->get();
+
+        foreach ($offers as $offer) {
+            $flat = $offer->sections->sortBy('sort_order')->flatMap->products->values();
+            $offer->setRelation('products', $flat);
+        }
 
         return response()->json($offers);
     }
 
     public function show(Offer $offer): JsonResponse
     {
-        $offer->load('products');
+        $offer->load([
+            'sections' => fn ($q) => $q->orderBy('sort_order'),
+            'sections.products' => fn ($q) => $q->orderBy('created_at', 'desc'),
+        ]);
+        $flat = $offer->sections->sortBy('sort_order')->flatMap->products->values();
+        $offer->setRelation('products', $flat);
+
         return response()->json($offer);
     }
 
@@ -52,7 +66,17 @@ class OfferController extends Controller
 
         $offer = Offer::create($data);
 
-        return response()->json($offer, 201);
+        $offer->sections()->create([
+            'name_ar' => 'عام',
+            'name_en' => 'General',
+            'sort_order' => 0,
+            'marketer_fee_per_unit' => null,
+        ]);
+
+        return response()->json($offer->fresh()->load([
+            'sections' => fn ($q) => $q->orderBy('sort_order'),
+            'sections.products',
+        ]), 201);
     }
 
     public function update(Request $request, Offer $offer): JsonResponse

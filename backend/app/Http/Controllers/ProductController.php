@@ -3,19 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\Offer;
+use App\Models\OfferSection;
 use App\Models\Product;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    public function index(Request $request, Offer $offer): JsonResponse
+    public function index(Request $request, Offer $offer, ?OfferSection $section = null): JsonResponse
     {
-        $query = $offer->products();
+        if ($section !== null && (int) $section->offer_id !== (int) $offer->id) {
+            abort(404);
+        }
+
+        $query = $section
+            ? $section->products()
+            : $offer->products();
 
         // Staff/admin see all products; customers see only active ones
-        if (!$request->user() || $request->user()->role === 'customer') {
+        if (! $request->user() || $request->user()->role === 'customer') {
             $query->where('is_active', true);
         }
 
@@ -23,7 +30,7 @@ class ProductController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name_ar', 'like', "%{$search}%")
-                  ->orWhere('name_en', 'like', "%{$search}%");
+                    ->orWhere('name_en', 'like', "%{$search}%");
             });
         }
 
@@ -32,19 +39,23 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-    public function store(Request $request, Offer $offer): JsonResponse
+    public function store(Request $request, Offer $offer, OfferSection $section): JsonResponse
     {
+        if ((int) $section->offer_id !== (int) $offer->id) {
+            abort(404);
+        }
+
         $data = $request->validate([
-            'name_ar'              => 'required|string|max:255',
-            'name_en'              => 'required|string|max:255',
-            'photos'               => 'nullable|array',
-            'photos.*'             => 'nullable|image|max:2048',
-            'promo_code'           => 'nullable|string|max:50',
-            'promo_expiry'         => 'nullable|date|after:today',
-            'promo_discount'       => 'nullable|numeric|min:0',
-            'unit_total_price'     => 'required|numeric|min:0',
-            'marketer_fee_per_unit' => 'required|numeric|min:0',
-            'is_active'            => 'boolean',
+            'name_ar' => 'required|string|max:255',
+            'name_en' => 'required|string|max:255',
+            'photos' => 'nullable|array',
+            'photos.*' => 'nullable|image|max:2048',
+            'promo_code' => 'nullable|string|max:50',
+            'promo_expiry' => 'nullable|date|after:today',
+            'promo_discount' => 'nullable|numeric|min:0',
+            'unit_total_price' => 'required|numeric|min:0',
+            'marketer_fee_per_unit' => 'nullable|numeric|min:0',
+            'is_active' => 'boolean',
         ]);
 
         $photosPaths = [];
@@ -55,8 +66,13 @@ class ProductController extends Controller
             }
         }
 
-        $product = $offer->products()->create([
+        if (!array_key_exists('marketer_fee_per_unit', $data) || $data['marketer_fee_per_unit'] === null) {
+            $data['marketer_fee_per_unit'] = (float) ($section->marketer_fee_per_unit ?? 0);
+        }
+
+        $product = $section->products()->create([
             ...$data,
+            'offer_id' => $offer->id,
             'photos' => $photosPaths ?: null,
         ]);
 
@@ -66,15 +82,26 @@ class ProductController extends Controller
     public function update(Request $request, Product $product): JsonResponse
     {
         $data = $request->validate([
-            'name_ar'              => 'sometimes|string|max:255',
-            'name_en'              => 'sometimes|string|max:255',
-            'promo_code'           => 'nullable|string|max:50',
-            'promo_expiry'         => 'nullable|date',
-            'promo_discount'       => 'nullable|numeric|min:0',
-            'unit_total_price'     => 'sometimes|numeric|min:0',
+            'name_ar' => 'sometimes|string|max:255',
+            'name_en' => 'sometimes|string|max:255',
+            'promo_code' => 'nullable|string|max:50',
+            'promo_expiry' => 'nullable|date',
+            'promo_discount' => 'nullable|numeric|min:0',
+            'unit_total_price' => 'sometimes|numeric|min:0',
             'marketer_fee_per_unit' => 'sometimes|numeric|min:0',
-            'is_active'            => 'sometimes|boolean',
+            'is_active' => 'sometimes|boolean',
+            'section_id' => 'sometimes|exists:offer_sections,id',
         ]);
+
+        if (array_key_exists('section_id', $data)) {
+            $newSection = OfferSection::findOrFail($data['section_id']);
+            if ((int) $newSection->offer_id !== (int) $product->offer_id) {
+                return response()->json(['message' => 'Section must belong to the same offer.'], 422);
+            }
+            if (!array_key_exists('marketer_fee_per_unit', $data)) {
+                $data['marketer_fee_per_unit'] = (float) ($newSection->marketer_fee_per_unit ?? $product->marketer_fee_per_unit);
+            }
+        }
 
         if ($request->hasFile('photos')) {
             $request->validate(['photos.*' => 'image|max:2048']);
@@ -93,7 +120,8 @@ class ProductController extends Controller
 
     public function toggleActive(Product $product): JsonResponse
     {
-        $product->update(['is_active' => !$product->is_active]);
+        $product->update(['is_active' => ! $product->is_active]);
+
         return response()->json($product->fresh());
     }
 
@@ -105,15 +133,15 @@ class ProductController extends Controller
             }
         }
         $product->delete();
+
         return response()->json(['message' => 'Product deleted.']);
     }
 
     public function bulkUpdate(Request $request, Offer $offer): JsonResponse
     {
         $data = $request->validate([
-            'field'      => 'required|in:unit_total_price,marketer_fee_per_unit',
+            'field' => 'required|in:unit_total_price,marketer_fee_per_unit',
             'percentage' => 'required|numeric',
-            // Positive = increase, negative = decrease
         ]);
 
         $products = $offer->products;
@@ -128,8 +156,36 @@ class ProductController extends Controller
         }
 
         return response()->json([
-            'message'  => 'Bulk update applied.',
+            'message' => 'Bulk update applied.',
             'products' => $offer->fresh()->products,
+        ]);
+    }
+
+    public function bulkUpdateSection(Request $request, Offer $offer, OfferSection $section): JsonResponse
+    {
+        if ((int) $section->offer_id !== (int) $offer->id) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'field' => 'required|in:unit_total_price,marketer_fee_per_unit',
+            'percentage' => 'required|numeric',
+        ]);
+
+        $products = $section->products;
+        $field = $data['field'];
+        $percentage = $data['percentage'];
+
+        foreach ($products as $product) {
+            $currentValue = $product->{$field};
+            $newValue = $currentValue * (1 + $percentage / 100);
+            $newValue = max(0, round($newValue, 2));
+            $product->update([$field => $newValue]);
+        }
+
+        return response()->json([
+            'message' => 'Bulk update applied.',
+            'products' => $section->fresh()->products,
         ]);
     }
 }

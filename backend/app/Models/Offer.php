@@ -22,6 +22,11 @@ class Offer extends Model
         ];
     }
 
+    public function sections()
+    {
+        return $this->hasMany(OfferSection::class)->orderBy('sort_order');
+    }
+
     public function products()
     {
         return $this->hasMany(Product::class);
