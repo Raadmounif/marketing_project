@@ -90,6 +90,8 @@ function shouldUploadBackendPath(localPath) {
   if (rel === '.env') return false
   if (rel.includes('/node_modules/') || rel === 'node_modules') return false
   if (rel.includes('/vendor/') || rel === 'vendor') return false
+  // Symlink to storage/app/public — recreated on server via `php artisan storage:link`
+  if (rel === 'public/storage' || rel.startsWith('public/storage/')) return false
   if (rel.includes('storage/logs')) return false
   if (rel.includes('/tests/') || rel === 'tests') return false
   if (rel.includes('phpunit')) return false
