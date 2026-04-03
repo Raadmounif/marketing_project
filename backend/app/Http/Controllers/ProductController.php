@@ -17,6 +17,14 @@ class ProductController extends Controller
             abort(404);
         }
 
+        // Customers cannot browse or order from a disabled offer; staff/admin can (staff routes use auth middleware).
+        if (! $offer->is_active) {
+            $user = $request->user();
+            if (! $user || ! in_array($user->role, ['staff', 'admin'], true)) {
+                abort(404);
+            }
+        }
+
         $query = $section
             ? $section->products()
             : $offer->products();

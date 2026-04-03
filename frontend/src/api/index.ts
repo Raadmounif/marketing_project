@@ -42,8 +42,12 @@ export const authApi = {
 
 // Offers
 export const offersApi = {
+  /** Public landing — active offers only */
   list: () => api.get('/offers'),
+  /** Staff/admin — includes disabled offers */
+  listStaff: () => api.get('/staff/offers'),
   get: (id: number) => api.get(`/offers/${id}`),
+  getStaff: (id: number) => api.get(`/staff/offers/${id}`),
   create: (data: object) => api.post('/offers', data),
   update: (id: number, data: object) => api.put(`/offers/${id}`, data),
   delete: (id: number) => api.delete(`/offers/${id}`),
@@ -59,12 +63,12 @@ export const sectionsApi = {
     api.delete(`/offers/${offerId}/sections/${sectionId}`),
 }
 
-// Products
+// Products (staff use /staff/... so disabled offers are still manageable)
 export const productsApi = {
   list: (offerId: number, sectionId: number, search?: string) =>
-    api.get(`/offers/${offerId}/sections/${sectionId}/products`, { params: { search } }),
+    api.get(`/staff/offers/${offerId}/sections/${sectionId}/products`, { params: { search } }),
   listOffer: (offerId: number, search?: string) =>
-    api.get(`/offers/${offerId}/products`, { params: { search } }),
+    api.get(`/staff/offers/${offerId}/products`, { params: { search } }),
   create: (offerId: number, sectionId: number, data: FormData) =>
     api.post(`/offers/${offerId}/sections/${sectionId}/products`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },

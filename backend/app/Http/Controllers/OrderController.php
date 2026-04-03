@@ -43,6 +43,10 @@ class OrderController extends Controller
             return response()->json(['message' => 'This product is not linked to an offer. Please contact support.'], 422);
         }
 
+        if (! $product->offer->is_active) {
+            return response()->json(['message' => 'This offer is not available for orders right now.'], 422);
+        }
+
         $promoDiscount = 0;
 
         if ($product->isPromoValid()) {

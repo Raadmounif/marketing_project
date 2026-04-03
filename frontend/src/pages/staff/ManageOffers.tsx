@@ -32,7 +32,7 @@ export default function ManageOffers() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    offersApi.list().then((res) => setOffers(res.data)).finally(() => setLoading(false))
+    offersApi.listStaff().then((res) => setOffers(res.data)).finally(() => setLoading(false))
   }, [])
 
   const openCreate = () => {
@@ -112,6 +112,19 @@ export default function ManageOffers() {
     if (!confirm(t('staff.confirm_delete'))) return
     await offersApi.delete(id)
     setOffers((prev) => prev.filter((o) => o.id !== id))
+  }
+
+  const handleToggleOfferActive = async (offer: Offer) => {
+    try {
+      const res = await offersApi.update(offer.id, { is_active: !offer.is_active })
+      setOffers((prev) => prev.map((o) => (o.id === offer.id ? res.data : o)))
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined
+      alert(msg || t('common.error'))
+    }
   }
 
   return (
@@ -238,12 +251,22 @@ export default function ManageOffers() {
       ) : (
         <div className="space-y-3">
           {offers.map((offer) => (
-            <div key={offer.id} className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-gold-700 transition-colors">
+            <div
+              key={offer.id}
+              className={`card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-gold-700 transition-colors ${
+                !offer.is_active ? 'opacity-80 border-amber-800/50' : ''
+              }`}
+            >
               <div className="flex items-center gap-3">
                 <span className="px-2 py-1 bg-tobacco-800 rounded font-mono text-gold-400 text-sm">{offer.code}</span>
                 <div>
                   <p className="font-medium text-cream-100">{lang === 'ar' ? offer.name_ar : offer.name_en}</p>
                   <p className="text-xs text-tobacco-500">{lang === 'ar' ? offer.name_en : offer.name_ar}</p>
+                  {!offer.is_active && (
+                    <span className="inline-block mt-1 text-xs font-semibold text-amber-400 bg-amber-900/40 px-2 py-0.5 rounded">
+                      {t('staff.offer_disabled')}
+                    </span>
+                  )}
                   {offer.marketer_fee_schedule ? (
                     <span className="text-xs text-forest-500">
                       ✓ {lang === 'ar' ? 'جدول العمولة: ' : 'Fees: '}
@@ -257,6 +280,17 @@ export default function ManageOffers() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => handleToggleOfferActive(offer)}
+                  className={`text-sm py-1.5 px-3 rounded-lg font-medium ${
+                    offer.is_active
+                      ? 'bg-amber-900/50 text-amber-200 hover:bg-amber-800/60 border border-amber-700/50'
+                      : 'bg-forest-700 text-white hover:bg-forest-600 border border-forest-500/50'
+                  }`}
+                >
+                  {offer.is_active ? t('staff.disable_offer') : t('staff.enable_offer')}
+                </button>
                 <Link to={`/staff/offers/${offer.id}/sections`} className="btn-secondary text-sm py-1.5 px-3">
                   {t('staff.manage_sections')}
                 </Link>

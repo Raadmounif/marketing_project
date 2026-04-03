@@ -41,7 +41,7 @@ export default function ManageProducts() {
     const sid = parseInt(sectionId, 10)
     setLoading(true)
     Promise.all([
-      offersApi.get(oid),
+      offersApi.getStaff(oid),
       sectionsApi.list(oid),
       productsApi.list(oid, sid),
     ])

@@ -8,10 +8,47 @@ use Illuminate\Http\JsonResponse;
 
 class OfferController extends Controller
 {
+    /**
+     * Public: active offers only (landing, customers).
+     */
     public function index(): JsonResponse
     {
-        // Return all products (including inactive) so the frontend can show "out of stock"
-        $offers = Offer::where('is_active', true)
+        return response()->json($this->loadOffersForResponse(
+            Offer::where('is_active', true)
+        ));
+    }
+
+    /**
+     * Staff/admin: all offers including disabled (manage screens).
+     */
+    public function indexAll(): JsonResponse
+    {
+        return response()->json($this->loadOffersForResponse(Offer::query()));
+    }
+
+    /**
+     * Public offer detail — hidden when offer is disabled.
+     */
+    public function show(Offer $offer): JsonResponse
+    {
+        if (! $offer->is_active) {
+            abort(404);
+        }
+
+        return response()->json($this->hydrateOffer($offer));
+    }
+
+    /**
+     * Staff/admin: offer detail even when disabled.
+     */
+    public function showStaff(Offer $offer): JsonResponse
+    {
+        return response()->json($this->hydrateOffer($offer));
+    }
+
+    private function loadOffersForResponse($query): \Illuminate\Support\Collection
+    {
+        $offers = $query
             ->with([
                 'sections' => fn ($q) => $q->orderBy('sort_order'),
                 'sections.products' => fn ($q) => $q->orderBy('created_at', 'desc'),
@@ -24,10 +61,10 @@ class OfferController extends Controller
             $offer->setRelation('products', $flat);
         }
 
-        return response()->json($offers);
+        return $offers;
     }
 
-    public function show(Offer $offer): JsonResponse
+    private function hydrateOffer(Offer $offer): Offer
     {
         $offer->load([
             'sections' => fn ($q) => $q->orderBy('sort_order'),
@@ -36,7 +73,7 @@ class OfferController extends Controller
         $flat = $offer->sections->sortBy('sort_order')->flatMap->products->values();
         $offer->setRelation('products', $flat);
 
-        return response()->json($offer);
+        return $offer;
     }
 
     public function store(Request $request): JsonResponse
@@ -63,6 +100,10 @@ class OfferController extends Controller
             'marketer_fee_schedule.state_extras'      => 'nullable|array',
             'is_active'      => 'boolean',
         ]);
+
+        if (! array_key_exists('is_active', $data)) {
+            $data['is_active'] = true;
+        }
 
         $offer = Offer::create($data);
 

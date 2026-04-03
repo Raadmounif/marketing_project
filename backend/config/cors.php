@@ -8,6 +8,9 @@ return [
         'https://www.puffplaza.com',
         'http://localhost:5173',
         'http://localhost:3000',
+        // Vite default when using --host 127.0.0.1 (must match browser URL)
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:3000',
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],

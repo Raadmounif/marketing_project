@@ -50,6 +50,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Staff + Admin routes
 Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
+    Route::get('/staff/offers', [OfferController::class, 'indexAll']);
+    Route::get('/staff/offers/{offer}', [OfferController::class, 'showStaff']);
+    Route::get('/staff/offers/{offer}/sections/{section}/products', [ProductController::class, 'index']);
+    Route::get('/staff/offers/{offer}/products', [ProductController::class, 'index']);
+
     Route::get('/orders', [OrderController::class, 'index']);
     Route::patch('/orders/{order}/commission', [OrderController::class, 'toggleCommission']);
     Route::get('/notifications/overdue', [NotificationController::class, 'index']);

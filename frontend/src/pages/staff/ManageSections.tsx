@@ -28,7 +28,7 @@ export default function ManageSections() {
     if (!offerId) return
     setLoading(true)
     const id = parseInt(offerId, 10)
-    Promise.all([offersApi.get(id), sectionsApi.list(id)])
+    Promise.all([offersApi.getStaff(id), sectionsApi.list(id)])
       .then(([offerRes, secRes]) => {
         setOffer(offerRes.data)
         setSections(secRes.data)
