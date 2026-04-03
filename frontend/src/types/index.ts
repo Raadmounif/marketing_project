@@ -57,6 +57,8 @@ export interface Offer {
   promo_code: string | null
   promo_expiry: string | null
   promo_discount_percent: number | null
+  /** Staff API only: last products CSV import time */
+  csv_imported_at?: string | null
   sections?: OfferSection[]
   products?: Product[]
   active_products?: Product[]

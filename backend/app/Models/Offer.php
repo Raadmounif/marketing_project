@@ -19,6 +19,14 @@ class Offer extends Model
         'promo_code',
         'promo_expiry',
         'promo_discount_percent',
+        'csv_imported_at',
+    ];
+
+    /**
+     * Staff-only; omitted from public offer JSON (see OfferController).
+     */
+    protected $hidden = [
+        'csv_imported_at',
     ];
 
     protected function casts(): array
@@ -29,6 +37,7 @@ class Offer extends Model
             'is_active'                 => 'boolean',
             'promo_expiry'              => 'date',
             'promo_discount_percent'    => 'float',
+            'csv_imported_at'           => 'datetime',
         ];
     }
 

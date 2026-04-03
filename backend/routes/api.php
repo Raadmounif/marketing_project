@@ -64,6 +64,7 @@ Route::middleware(['auth:sanctum', 'role:staff,admin'])->group(function () {
     Route::put('/offers/{offer}', [OfferController::class, 'update']);
     Route::delete('/offers/{offer}', [OfferController::class, 'destroy']);
 
+    Route::post('/offers/{offer}/products/import-csv', [ProductController::class, 'importCsv']);
     Route::post('/offers/{offer}/sections/{section}/products', [ProductController::class, 'store']);
     Route::match(['put', 'post'], '/products/{product}', [ProductController::class, 'update']);
     Route::delete('/products/{product}', [ProductController::class, 'destroy']);

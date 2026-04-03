@@ -83,6 +83,11 @@ export const productsApi = {
     api.post(`/offers/${offerId}/products/bulk-update`, data),
   bulkUpdateSection: (offerId: number, sectionId: number, data: object) =>
     api.post(`/offers/${offerId}/sections/${sectionId}/products/bulk-update`, data),
+  importCsv: (offerId: number, file: File) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return api.post(`/offers/${offerId}/products/import-csv`, fd)
+  },
 }
 
 // Orders

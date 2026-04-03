@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useLang } from '../../contexts/LangContext'
-import { offersApi } from '../../api'
+import { offersApi, productsApi } from '../../api'
 import { UAE_STATES } from '../../types'
 import type { Offer, MarketerFeeSchedule } from '../../types'
 
@@ -33,6 +33,9 @@ export default function ManageOffers() {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const csvFileRef = useRef<HTMLInputElement>(null)
+  const csvOfferIdRef = useRef<number | null>(null)
+  const [csvUploadingId, setCsvUploadingId] = useState<number | null>(null)
 
   useEffect(() => {
     offersApi.listStaff().then((res) => setOffers(res.data)).finally(() => setLoading(false))
@@ -138,6 +141,60 @@ export default function ManageOffers() {
     setOffers((prev) => prev.filter((o) => o.id !== id))
   }
 
+  const handleCsvButtonClick = (offerId: number) => {
+    csvOfferIdRef.current = offerId
+    csvFileRef.current?.click()
+  }
+
+  const handleCsvFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    const offerId = csvOfferIdRef.current
+    e.target.value = ''
+    csvOfferIdRef.current = null
+    if (!file || offerId == null) return
+
+    setCsvUploadingId(offerId)
+    try {
+      const res = await productsApi.importCsv(offerId, file)
+      const { imported, errors, section_directives, sections_created, csv_imported_at } = res.data as {
+        imported: number
+        errors: { line: number; message: string }[]
+        section_directives?: number
+        sections_created?: number
+        csv_imported_at?: string | null
+      }
+      const errLines =
+        errors?.length > 0
+          ? '\n' +
+            errors.slice(0, 8).map((er) => `${t('staff.csv_line')} ${er.line}: ${er.message}`).join('\n') +
+            (errors.length > 8 ? '\n…' : '')
+          : ''
+      const dirs = section_directives ?? 0
+      const created = sections_created ?? 0
+      const sectionNote =
+        dirs > 0 ? `\n${t('staff.csv_import_sections_note', { directives: dirs, created })}` : ''
+      try {
+        const listRes = await offersApi.listStaff()
+        setOffers(listRes.data)
+      } catch {
+        if (csv_imported_at != null) {
+          setOffers((prev) =>
+            prev.map((o) => (o.id === offerId ? { ...o, csv_imported_at } : o)),
+          )
+        }
+      }
+      alert(`${t('staff.csv_import_result', { count: imported })}${sectionNote}${errLines}`)
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined
+      alert(msg || t('common.error'))
+    } finally {
+      setCsvUploadingId(null)
+    }
+  }
+
   const handleToggleOfferActive = async (offer: Offer) => {
     try {
       const res = await offersApi.update(offer.id, { is_active: !offer.is_active })
@@ -153,10 +210,19 @@ export default function ManageOffers() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 animate-fade-in">
+      <input
+        ref={csvFileRef}
+        type="file"
+        accept=".csv,.txt,text/csv,text/plain"
+        className="hidden"
+        onChange={handleCsvFileChange}
+      />
+
       <div className="flex items-center justify-between mb-8">
         <div>
           <Link to="/staff" className="text-tobacco-400 hover:text-gold-400 text-sm mb-2 block">← {t('staff.dashboard')}</Link>
           <h1 className="section-title text-2xl">{t('staff.manage_offers')}</h1>
+          <p className="text-xs text-tobacco-500 mt-1 max-w-xl">{t('staff.csv_upload_hint')}</p>
         </div>
         <button onClick={openCreate} className="btn-primary">{t('staff.add_offer')}</button>
       </div>
@@ -348,6 +414,16 @@ export default function ManageOffers() {
                       {t('staff.offer_promo_badge', { percent: offer.promo_discount_percent })}
                     </span>
                   )}
+                  <p className="text-xs text-tobacco-500 mt-1">
+                    {offer.csv_imported_at
+                      ? t('staff.offer_csv_imported_at', {
+                          date: new Intl.DateTimeFormat(lang === 'ar' ? 'ar-AE' : 'en-GB', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          }).format(new Date(offer.csv_imported_at)),
+                        })
+                      : t('staff.offer_csv_never')}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -365,6 +441,15 @@ export default function ManageOffers() {
                 <Link to={`/staff/offers/${offer.id}/sections`} className="btn-secondary text-sm py-1.5 px-3">
                   {t('staff.manage_sections')}
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => handleCsvButtonClick(offer.id)}
+                  disabled={csvUploadingId === offer.id}
+                  title={t('staff.csv_format_title')}
+                  className="btn-secondary text-sm py-1.5 px-3 border border-forest-700/50 text-forest-400 hover:bg-forest-900/40 disabled:opacity-50"
+                >
+                  {csvUploadingId === offer.id ? t('common.loading') : t('staff.upload_products_csv')}
+                </button>
                 <button onClick={() => openEdit(offer)} className="btn-secondary text-sm py-1.5 px-3">{t('common.edit')}</button>
                 <button onClick={() => handleDelete(offer.id)} className="btn-danger text-sm py-1.5 px-3">{t('common.delete')}</button>
               </div>

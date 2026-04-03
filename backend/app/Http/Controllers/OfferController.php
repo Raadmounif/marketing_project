@@ -14,7 +14,8 @@ class OfferController extends Controller
     public function index(): JsonResponse
     {
         return response()->json($this->loadOffersForResponse(
-            Offer::where('is_active', true)
+            Offer::where('is_active', true),
+            false
         ));
     }
 
@@ -23,7 +24,7 @@ class OfferController extends Controller
      */
     public function indexAll(): JsonResponse
     {
-        return response()->json($this->loadOffersForResponse(Offer::query()));
+        return response()->json($this->loadOffersForResponse(Offer::query(), forStaff: true));
     }
 
     /**
@@ -43,10 +44,10 @@ class OfferController extends Controller
      */
     public function showStaff(Offer $offer): JsonResponse
     {
-        return response()->json($this->hydrateOffer($offer));
+        return response()->json($this->offerToStaffArray($this->hydrateOffer($offer)));
     }
 
-    private function loadOffersForResponse($query): \Illuminate\Support\Collection
+    private function loadOffersForResponse($query, bool $forStaff = false): \Illuminate\Support\Collection
     {
         $offers = $query
             ->with([
@@ -61,7 +62,22 @@ class OfferController extends Controller
             $offer->setRelation('products', $flat);
         }
 
+        if ($forStaff) {
+            return $offers->map(fn (Offer $offer) => $this->offerToStaffArray($offer))->values();
+        }
+
         return $offers;
+    }
+
+    /**
+     * Staff JSON must include csv_imported_at; the attribute stays $hidden on the model for public/nested offer payloads.
+     */
+    private function offerToStaffArray(Offer $offer): array
+    {
+        $data = $offer->toArray();
+        $data['csv_imported_at'] = $offer->csv_imported_at?->toIso8601String();
+
+        return $data;
     }
 
     private function hydrateOffer(Offer $offer): Offer
@@ -123,10 +139,12 @@ class OfferController extends Controller
             'marketer_fee_per_unit' => null,
         ]);
 
-        return response()->json($offer->fresh()->load([
+        $fresh = $offer->fresh()->load([
             'sections' => fn ($q) => $q->orderBy('sort_order'),
             'sections.products',
-        ]), 201);
+        ]);
+
+        return response()->json($this->offerToStaffArray($fresh), 201);
     }
 
     public function update(Request $request, Offer $offer): JsonResponse
@@ -153,7 +171,9 @@ class OfferController extends Controller
 
         $offer->update($data);
 
-        return response()->json($offer->fresh());
+        $fresh = $offer->fresh();
+
+        return response()->json($this->offerToStaffArray($fresh));
     }
 
     public function destroy(Offer $offer): JsonResponse
