@@ -5,7 +5,8 @@
   "scripts": {
     "clean": "node clean-cpanel.mjs",
     "deploy": "node deploy-cpanel.mjs",
-    "deploy:full": "node deploy-full.mjs"
+    "deploy:full": "node deploy-full.mjs",
+    "remote:storage": "node remote-storage-link.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
