@@ -117,6 +117,8 @@ export interface AdvertisingBoard {
   content_ar: string
   content_en: string
   image_path: string | null
+  /** Absolute URL from API when present (preferred over storageBase + image_path) */
+  image_url?: string | null
   is_active: boolean
   sort_order: number
 }

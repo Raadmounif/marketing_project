@@ -73,6 +73,7 @@ function buildBackendEnv() {
     ['MAIL_PASSWORD', process.env.MAIL_PASSWORD],
     ['MAIL_FROM_ADDRESS', process.env.MAIL_FROM_ADDRESS],
     ['NOTIFICATION_EMAIL', process.env.NOTIFICATION_EMAIL],
+    ['PUBLIC_STORAGE_URL', process.env.PUBLIC_STORAGE_URL],
   ]
   for (const [key, val] of pairs) {
     if (val != null && String(val).trim() !== '') {

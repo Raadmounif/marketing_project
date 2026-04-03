@@ -129,8 +129,12 @@ export default function BoardEditor() {
         <div className="space-y-3">
           {items.sort((a, b) => a.sort_order - b.sort_order).map((item) => (
             <div key={item.id} className="card p-4 flex gap-4">
-              {item.image_path && (
-                <img src={`${storageBase}/${item.image_path}`} alt="" className="w-20 h-16 object-cover rounded-lg flex-shrink-0" />
+              {(item.image_url || item.image_path) && (
+                <img
+                  src={item.image_url || `${storageBase}/${item.image_path}`}
+                  alt=""
+                  className="w-20 h-16 object-cover rounded-lg flex-shrink-0"
+                />
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-cream-100 font-medium truncate">{lang === 'ar' ? item.content_ar : item.content_en}</p>

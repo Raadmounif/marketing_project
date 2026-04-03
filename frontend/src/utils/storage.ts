@@ -8,6 +8,11 @@ export function getStorageBase(): string {
     return `${api}/public/storage`
   }
 
-  return api ? `${api}/storage` : ''
+  if (api) {
+    return `${api}/storage`
+  }
+
+  // Same-origin fallback when VITE_API_URL was omitted at build (use with reverse proxy /api)
+  return '/api/public/storage'
 }
 

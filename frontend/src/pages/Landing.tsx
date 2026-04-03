@@ -86,9 +86,9 @@ export default function Landing() {
             {boards.map((board) => (
               <SwiperSlide key={board.id}>
                 <div className="relative h-full w-full flex items-center justify-center overflow-hidden bg-tobacco-800">
-                  {board.image_path && (
+                  {(board.image_url || board.image_path) && (
                     <img
-                      src={`${storageBase}/${board.image_path}`}
+                      src={board.image_url || `${storageBase}/${board.image_path}`}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover opacity-40"
                     />
