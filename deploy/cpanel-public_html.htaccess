@@ -1,3 +1,10 @@
+# Avoid stale SPA shell after deploy (browsers may cache index.html otherwise)
+<IfModule mod_headers.c>
+  <Files "index.html">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </Files>
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
