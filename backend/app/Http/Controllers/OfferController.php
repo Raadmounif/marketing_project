@@ -99,10 +99,19 @@ class OfferController extends Controller
             'marketer_fee_schedule.qty_fees.4'        => 'nullable|numeric|min:0',
             'marketer_fee_schedule.state_extras'      => 'nullable|array',
             'is_active'      => 'boolean',
+            'promo_code'                 => 'nullable|string|max:50',
+            'promo_expiry'               => 'nullable|date',
+            'promo_discount_percent'     => 'nullable|numeric|min:0|max:100',
         ]);
 
         if (! array_key_exists('is_active', $data)) {
             $data['is_active'] = true;
+        }
+
+        $this->normalizeOfferPromoFields($data);
+        $promoErr = $this->validateOfferPromoConsistency($data);
+        if ($promoErr !== null) {
+            return response()->json(['message' => $promoErr], 422);
         }
 
         $offer = Offer::create($data);
@@ -131,7 +140,16 @@ class OfferController extends Controller
             'marketer_fee_schedule.qty_fees'     => 'nullable|array',
             'marketer_fee_schedule.state_extras' => 'nullable|array',
             'is_active'      => 'sometimes|boolean',
+            'promo_code'                 => 'nullable|string|max:50',
+            'promo_expiry'               => 'nullable|date',
+            'promo_discount_percent'     => 'nullable|numeric|min:0|max:100',
         ]);
+
+        $this->normalizeOfferPromoFields($data);
+        $promoErr = $this->validateOfferPromoConsistency($data);
+        if ($promoErr !== null) {
+            return response()->json(['message' => $promoErr], 422);
+        }
 
         $offer->update($data);
 
@@ -142,5 +160,41 @@ class OfferController extends Controller
     {
         $offer->delete();
         return response()->json(['message' => 'Offer deleted.']);
+    }
+
+    private function normalizeOfferPromoFields(array &$data): void
+    {
+        foreach (['promo_code', 'promo_expiry'] as $k) {
+            if (array_key_exists($k, $data) && ($data[$k] === '' || $data[$k] === null)) {
+                $data[$k] = null;
+            }
+        }
+        if (array_key_exists('promo_discount_percent', $data)
+            && ($data['promo_discount_percent'] === '' || $data['promo_discount_percent'] === null)) {
+            $data['promo_discount_percent'] = null;
+        }
+        if (array_key_exists('promo_code', $data) && empty($data['promo_code'])) {
+            $data['promo_code'] = null;
+            $data['promo_expiry'] = null;
+            $data['promo_discount_percent'] = null;
+        }
+    }
+
+    private function validateOfferPromoConsistency(array $data): ?string
+    {
+        if (! array_key_exists('promo_code', $data) || empty($data['promo_code'])) {
+            return null;
+        }
+        if (empty($data['promo_expiry'])) {
+            return 'Promo expiry is required when a promo code is set.';
+        }
+        if (($data['promo_discount_percent'] ?? null) === null || (float) $data['promo_discount_percent'] <= 0) {
+            return 'Promo discount percent must be greater than 0 when a promo code is set.';
+        }
+        if (\Carbon\Carbon::parse($data['promo_expiry'])->endOfDay()->isPast()) {
+            return 'Promo expiry must be in the future.';
+        }
+
+        return null;
     }
 }

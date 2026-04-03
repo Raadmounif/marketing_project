@@ -4,6 +4,7 @@ import { useLang } from '../contexts/LangContext'
 import { useAuth } from '../contexts/AuthContext'
 import { ordersApi } from '../api'
 import type { Product } from '../types'
+import { lineSubtotalPromoDiscount, resolvePromoPercent } from '../utils/promo'
 
 interface Props {
   product: Product | null
@@ -32,13 +33,15 @@ export default function OrderModal({ product, onClose, onSuccess }: Props) {
 
   if (!product || !user) return null
 
-  const isPromoValid =
-    promoCode &&
-    product.promo_code === promoCode &&
-    product.promo_expiry &&
-    new Date(product.promo_expiry) > new Date()
+  const trimmedPromo = promoCode.trim()
+  const lineSubtotal = quantity * product.unit_total_price
+  const resolvedPromo = trimmedPromo ? resolvePromoPercent(product, trimmedPromo) : null
+  const promoDiscount = resolvedPromo
+    ? lineSubtotalPromoDiscount(lineSubtotal, resolvedPromo.percent)
+    : 0
 
-  const promoDiscount = isPromoValid ? (product.promo_discount || 0) : 0
+  /** Empty field is OK; if the customer types a code it must match an active product or offer promo */
+  const promoInputOk = trimmedPromo === '' || !!resolvedPromo
 
   // Delivery fee = qty_fee + state_extra (for 5+ units: qty_fee=0, state_extra still applies)
   const schedule = product.offer?.marketer_fee_schedule
@@ -59,6 +62,10 @@ export default function OrderModal({ product, onClose, onSuccess }: Props) {
       setError(t('order.complete_profile'))
       return
     }
+    if (!promoInputOk) {
+      setError(t('order.promo_invalid'))
+      return
+    }
     setLoading(true)
     setError('')
     try {
@@ -66,6 +73,7 @@ export default function OrderModal({ product, onClose, onSuccess }: Props) {
         product_id: product.id,
         quantity,
         notes: notes || undefined,
+        ...(trimmedPromo ? { promo_code: trimmedPromo } : {}),
       })
       onSuccess(res.data.order_number)
     } catch (err: any) {
@@ -108,25 +116,28 @@ export default function OrderModal({ product, onClose, onSuccess }: Props) {
             />
           </div>
 
-          {/* Promo code */}
-          {product.promo_code && (
-            <div>
-              <label className="label-text">{t('order.promo_code')}</label>
-              <input
-                type="text"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-                className="input-field"
-                placeholder={t('order.promo_code')}
-              />
-              {promoCode && !isPromoValid && (
-                <p className="text-red-400 text-xs mt-1">{t('order.promo_invalid')}</p>
-              )}
-              {isPromoValid && (
-                <p className="text-forest-600 text-xs mt-1">-{promoDiscount} {t('common.aed')}</p>
-              )}
-            </div>
-          )}
+          {/* Promo code (optional; required to match staff-configured code to get discount) */}
+          <div>
+            <label className="label-text">{t('order.promo_code')}</label>
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              className="input-field"
+              placeholder={t('order.promo_code_placeholder')}
+              autoComplete="off"
+            />
+            <p className="text-tobacco-500 text-xs mt-1">{t('order.promo_code_hint')}</p>
+            {trimmedPromo !== '' && !promoInputOk && (
+              <p className="text-red-400 text-xs mt-1">{t('order.promo_invalid')}</p>
+            )}
+            {resolvedPromo && (
+              <p className="text-forest-600 text-xs mt-1">
+                {resolvedPromo.percent}% {t('order.promo_off_line_subtotal')} (−{promoDiscount.toFixed(2)}{' '}
+                {t('common.aed')})
+              </p>
+            )}
+          </div>
 
           {/* Notes */}
           <div>
@@ -160,9 +171,11 @@ export default function OrderModal({ product, onClose, onSuccess }: Props) {
                 <span>+{deliveryCost.toFixed(2)} {t('common.aed')}</span>
               </div>
             )}
-            {promoDiscount > 0 && (
+            {promoDiscount > 0 && resolvedPromo && (
               <div className="flex justify-between text-sm text-forest-600">
-                <span>{t('order.promo_code')}</span>
+                <span>
+                  {t('order.promo_discount_line', { percent: resolvedPromo.percent })}
+                </span>
                 <span>-{promoDiscount.toFixed(2)} {t('common.aed')}</span>
               </div>
             )}

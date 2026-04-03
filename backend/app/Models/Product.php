@@ -11,7 +11,7 @@ class Product extends Model
 
     protected $fillable = [
         'offer_id', 'section_id', 'name_ar', 'name_en', 'photos',
-        'promo_code', 'promo_expiry', 'promo_discount',
+        'promo_code', 'promo_expiry', 'promo_discount_percent',
         'unit_total_price', 'marketer_fee_per_unit', 'is_active',
     ];
 
@@ -23,7 +23,7 @@ class Product extends Model
             'unit_total_price' => 'float',
             'marketer_fee_per_unit' => 'float',
             'price_per_unit' => 'float',
-            'promo_discount' => 'float',
+            'promo_discount_percent' => 'float',
             'is_active' => 'boolean',
         ];
     }
@@ -50,10 +50,14 @@ class Product extends Model
 
     public function isPromoValid(): bool
     {
-        if (!$this->promo_code || !$this->promo_expiry) {
+        if (! $this->promo_code || ! $this->promo_expiry) {
             return false;
         }
-        return $this->promo_expiry->isFuture();
+        if (! $this->promo_expiry->isFuture()) {
+            return false;
+        }
+
+        return ($this->promo_discount_percent ?? 0) > 0;
     }
 
     public function getEffectiveMarketerFeePerUnit(): float

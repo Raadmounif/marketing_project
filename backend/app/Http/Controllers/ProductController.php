@@ -42,7 +42,7 @@ class ProductController extends Controller
             });
         }
 
-        $products = $query->orderBy('created_at', 'desc')->get();
+        $products = $query->with('offer')->orderBy('created_at', 'desc')->get();
 
         return response()->json($products);
     }
@@ -59,12 +59,18 @@ class ProductController extends Controller
             'photos' => 'nullable|array',
             'photos.*' => 'nullable|image|max:2048',
             'promo_code' => 'nullable|string|max:50',
-            'promo_expiry' => 'nullable|date|after:today',
-            'promo_discount' => 'nullable|numeric|min:0',
+            'promo_expiry' => 'nullable|date',
+            'promo_discount_percent' => 'nullable|numeric|min:0|max:100',
             'unit_total_price' => 'required|numeric|min:0',
             'marketer_fee_per_unit' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
         ]);
+
+        $this->normalizeProductPromoFields($data);
+        $promoErr = $this->validateProductPromoConsistency($data);
+        if ($promoErr !== null) {
+            return response()->json(['message' => $promoErr], 422);
+        }
 
         $photosPaths = [];
         if ($request->hasFile('photos')) {
@@ -94,12 +100,18 @@ class ProductController extends Controller
             'name_en' => 'sometimes|string|max:255',
             'promo_code' => 'nullable|string|max:50',
             'promo_expiry' => 'nullable|date',
-            'promo_discount' => 'nullable|numeric|min:0',
+            'promo_discount_percent' => 'nullable|numeric|min:0|max:100',
             'unit_total_price' => 'sometimes|numeric|min:0',
             'marketer_fee_per_unit' => 'sometimes|numeric|min:0',
             'is_active' => 'sometimes|boolean',
             'section_id' => 'sometimes|exists:offer_sections,id',
         ]);
+
+        $this->normalizeProductPromoFields($data);
+        $promoErr = $this->validateProductPromoConsistency($data);
+        if ($promoErr !== null) {
+            return response()->json(['message' => $promoErr], 422);
+        }
 
         if (array_key_exists('section_id', $data)) {
             $newSection = OfferSection::findOrFail($data['section_id']);
@@ -195,5 +207,41 @@ class ProductController extends Controller
             'message' => 'Bulk update applied.',
             'products' => $section->fresh()->products,
         ]);
+    }
+
+    private function normalizeProductPromoFields(array &$data): void
+    {
+        foreach (['promo_code', 'promo_expiry'] as $k) {
+            if (array_key_exists($k, $data) && ($data[$k] === '' || $data[$k] === null)) {
+                $data[$k] = null;
+            }
+        }
+        if (array_key_exists('promo_discount_percent', $data)
+            && ($data['promo_discount_percent'] === '' || $data['promo_discount_percent'] === null)) {
+            $data['promo_discount_percent'] = null;
+        }
+        if (array_key_exists('promo_code', $data) && empty($data['promo_code'])) {
+            $data['promo_code'] = null;
+            $data['promo_expiry'] = null;
+            $data['promo_discount_percent'] = null;
+        }
+    }
+
+    private function validateProductPromoConsistency(array $data): ?string
+    {
+        if (! array_key_exists('promo_code', $data) || empty($data['promo_code'])) {
+            return null;
+        }
+        if (empty($data['promo_expiry'])) {
+            return 'Promo expiry is required when a promo code is set.';
+        }
+        if (($data['promo_discount_percent'] ?? null) === null || (float) $data['promo_discount_percent'] <= 0) {
+            return 'Promo discount percent must be greater than 0 when a promo code is set.';
+        }
+        if (\Carbon\Carbon::parse($data['promo_expiry'])->endOfDay()->isPast()) {
+            return 'Promo expiry must be in the future.';
+        }
+
+        return null;
     }
 }

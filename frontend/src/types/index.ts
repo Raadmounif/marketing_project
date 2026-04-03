@@ -54,6 +54,9 @@ export interface Offer {
   delivery_costs: Record<string, number>
   marketer_fee_schedule: MarketerFeeSchedule | null
   is_active: boolean
+  promo_code: string | null
+  promo_expiry: string | null
+  promo_discount_percent: number | null
   sections?: OfferSection[]
   products?: Product[]
   active_products?: Product[]
@@ -69,7 +72,7 @@ export interface Product {
   photos: string[] | null
   promo_code: string | null
   promo_expiry: string | null
-  promo_discount: number | null
+  promo_discount_percent: number | null
   unit_total_price: number
   marketer_fee_per_unit: number
   price_per_unit: number

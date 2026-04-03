@@ -27,6 +27,9 @@ export default function ManageOffers() {
     name_en: '',
     code: '',
     marketer_fee_schedule: emptySchedule(),
+    promo_code: '',
+    promo_expiry: '',
+    promo_discount_percent: 0,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -37,7 +40,15 @@ export default function ManageOffers() {
 
   const openCreate = () => {
     setEditingOffer(null)
-    setForm({ name_ar: '', name_en: '', code: '', marketer_fee_schedule: emptySchedule() })
+    setForm({
+      name_ar: '',
+      name_en: '',
+      code: '',
+      marketer_fee_schedule: emptySchedule(),
+      promo_code: '',
+      promo_expiry: '',
+      promo_discount_percent: 0,
+    })
     setShowForm(true)
     setError('')
   }
@@ -55,7 +66,15 @@ export default function ManageOffers() {
         ...(existing?.state_extras ?? {}),
       },
     }
-    setForm({ name_ar: offer.name_ar, name_en: offer.name_en, code: offer.code, marketer_fee_schedule: schedule })
+    setForm({
+      name_ar: offer.name_ar,
+      name_en: offer.name_en,
+      code: offer.code,
+      marketer_fee_schedule: schedule,
+      promo_code: offer.promo_code || '',
+      promo_expiry: offer.promo_expiry ? String(offer.promo_expiry).slice(0, 10) : '',
+      promo_discount_percent: offer.promo_discount_percent ?? 0,
+    })
     setShowForm(true)
     setError('')
   }
@@ -92,6 +111,11 @@ export default function ManageOffers() {
         code: form.code,
         delivery_costs: ZERO_COSTS,
         marketer_fee_schedule: form.marketer_fee_schedule,
+        promo_code: form.promo_code.trim() || null,
+        promo_expiry: form.promo_expiry || null,
+        promo_discount_percent: form.promo_discount_percent
+          ? Number(form.promo_discount_percent)
+          : null,
       }
       if (editingOffer) {
         const res = await offersApi.update(editingOffer.id, payload)
@@ -168,6 +192,48 @@ export default function ManageOffers() {
               <div>
                 <label className="label-text">{t('staff.offer_code')}</label>
                 <input value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))} required className="input-field font-mono" />
+              </div>
+
+              <div className="border border-tobacco-600 rounded-xl p-4 space-y-3 bg-tobacco-800/20">
+                <p className="text-sm font-semibold text-tobacco-200">{t('staff.offer_promo_section')}</p>
+                <p className="text-xs text-tobacco-500">{t('staff.offer_promo_section_hint')}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="label-text text-xs">{t('staff.promo_code')}</label>
+                    <input
+                      value={form.promo_code}
+                      onChange={(e) => setForm((p) => ({ ...p, promo_code: e.target.value }))}
+                      className="input-field"
+                      placeholder={t('staff.promo_code_optional_ph')}
+                    />
+                  </div>
+                  <div>
+                    <label className="label-text text-xs">{t('staff.promo_expiry')}</label>
+                    <input
+                      type="date"
+                      value={form.promo_expiry}
+                      onChange={(e) => setForm((p) => ({ ...p, promo_expiry: e.target.value }))}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="label-text text-xs">{t('staff.promo_discount_percent')}</label>
+                    <input
+                      type="number"
+                      value={form.promo_discount_percent || ''}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          promo_discount_percent: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                      className="input-field"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Marketer Fee Schedule — always enabled */}
@@ -276,6 +342,11 @@ export default function ManageOffers() {
                     </span>
                   ) : (
                     <span className="text-xs text-tobacco-600">{lang === 'ar' ? 'لا يوجد جدول عمولة' : 'No fee schedule'}</span>
+                  )}
+                  {offer.promo_code && (offer.promo_discount_percent ?? 0) > 0 && (
+                    <span className="block text-xs text-forest-500 mt-1">
+                      {t('staff.offer_promo_badge', { percent: offer.promo_discount_percent })}
+                    </span>
                   )}
                 </div>
               </div>

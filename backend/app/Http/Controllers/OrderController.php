@@ -23,6 +23,7 @@ class OrderController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity'   => 'required|integer|min:1',
             'notes'      => 'nullable|string|max:500',
+            'promo_code' => 'nullable|string|max:50',
         ]);
 
         $user = $request->user();
@@ -47,21 +48,30 @@ class OrderController extends Controller
             return response()->json(['message' => 'This offer is not available for orders right now.'], 422);
         }
 
+        $lineSubtotal = $data['quantity'] * (float) $product->unit_total_price;
         $promoDiscount = 0;
+        $inputPromo = trim((string) ($data['promo_code'] ?? ''));
 
-        if ($product->isPromoValid()) {
-            $promoDiscount = $product->promo_discount ?? 0;
+        if ($inputPromo !== '') {
+            $resolved = $this->resolvePromoDiscount($product, $inputPromo);
+            if (isset($resolved['error'])) {
+                return response()->json(['message' => $resolved['error']], 422);
+            }
+            $promoDiscount = min(
+                $lineSubtotal,
+                round($lineSubtotal * (float) $resolved['percent'] / 100, 2)
+            );
         }
 
         // Delivery fee = qty_fee + state_extra (for 5+ units: qty_fee=0, state_extra still applies)
         $deliveryCost = $product->offer->getDeliveryFeeForOrder($data['quantity'], $user->state ?? '');
 
-        $total = ($data['quantity'] * $product->unit_total_price) + $deliveryCost - $promoDiscount;
+        $total = $lineSubtotal + $deliveryCost - $promoDiscount;
         $total = max(0, $total);
         $effectiveFeePerUnit = $product->getEffectiveMarketerFeePerUnit();
-        // Marketer fee total should always reflect per-unit fee source
-        // (section default when set, otherwise product value).
-        $marketerFeeTotal = round($data['quantity'] * $effectiveFeePerUnit, 2);
+        $baseMarketerFeeTotal = round($data['quantity'] * $effectiveFeePerUnit, 2);
+        // Promo discount (AED) is applied to marketer commission first: e.g. fee 2 − discount 1 = 1 (per unit when qty 1).
+        $marketerFeeTotal = max(0, round($baseMarketerFeeTotal - $promoDiscount, 2));
         $deliveryDate = now()->addDays(2)->toDateString();
 
         $order = DB::transaction(function () use ($data, $user, $product, $total, $marketerFeeTotal, $deliveryDate) {
@@ -305,6 +315,41 @@ class OrderController extends Controller
             'Content-Type' => $mime,
             'Content-Disposition' => 'inline; filename="' . $name . '"',
         ]);
+    }
+
+    /**
+     * Product-level promo is checked first; if the code does not match, offer-level promo is used.
+     *
+     * @return array{percent: float, source: string}|array{error: string}
+     */
+    private function resolvePromoDiscount(Product $product, string $inputPromo): array
+    {
+        if ($product->promo_code && strcasecmp($inputPromo, $product->promo_code) === 0) {
+            if (! $product->promo_expiry || ! $product->promo_expiry->isFuture()) {
+                return ['error' => 'This promo code has expired.'];
+            }
+            $pct = (float) ($product->promo_discount_percent ?? 0);
+            if ($pct <= 0) {
+                return ['error' => 'This promo code is not active.'];
+            }
+
+            return ['percent' => $pct, 'source' => 'product'];
+        }
+
+        $offer = $product->offer;
+        if ($offer && $offer->promo_code && strcasecmp($inputPromo, $offer->promo_code) === 0) {
+            if (! $offer->promo_expiry || ! $offer->promo_expiry->isFuture()) {
+                return ['error' => 'This promo code has expired.'];
+            }
+            $pct = (float) ($offer->promo_discount_percent ?? 0);
+            if ($pct <= 0) {
+                return ['error' => 'This promo code is not active.'];
+            }
+
+            return ['percent' => $pct, 'source' => 'offer'];
+        }
+
+        return ['error' => 'Invalid promo code.'];
     }
 
     /**

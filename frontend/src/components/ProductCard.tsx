@@ -5,6 +5,7 @@ import { useLang } from '../contexts/LangContext'
 import { useAuth } from '../contexts/AuthContext'
 import { favoritesApi } from '../api'
 import { getStorageBase } from '../utils/storage'
+import { hasActivePromoOnOffer, hasActivePromoOnProduct } from '../utils/promo'
 import type { Product } from '../types'
 
 interface Props {
@@ -90,8 +91,8 @@ export default function ProductCard({ product, isFavorited = false, onFavoriteCh
           </svg>
         </button>
 
-        {/* Promo badge */}
-        {product.promo_code && product.promo_expiry && new Date(product.promo_expiry) > new Date() && (
+        {/* Promo badge — product-level or offer-level */}
+        {(hasActivePromoOnProduct(product) || hasActivePromoOnOffer(product.offer)) && (
           <div className="absolute top-2 start-2 px-2 py-1 bg-forest-600 text-white text-xs font-bold rounded-md">
             {t('product.promo_available')}
           </div>

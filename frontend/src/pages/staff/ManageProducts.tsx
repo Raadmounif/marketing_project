@@ -28,7 +28,7 @@ export default function ManageProducts() {
     name_en: '',
     promo_code: '',
     promo_expiry: '',
-    promo_discount: 0,
+    promo_discount_percent: 0,
     unit_total_price: 0,
     marketer_fee_per_unit: 0,
     photos: [] as File[],
@@ -62,7 +62,7 @@ export default function ManageProducts() {
       name_en: '',
       promo_code: '',
       promo_expiry: '',
-      promo_discount: 0,
+      promo_discount_percent: 0,
       unit_total_price: 0,
       marketer_fee_per_unit: section?.marketer_fee_per_unit ?? 0,
       photos: [],
@@ -78,8 +78,8 @@ export default function ManageProducts() {
       name_ar: product.name_ar,
       name_en: product.name_en,
       promo_code: product.promo_code || '',
-      promo_expiry: product.promo_expiry || '',
-      promo_discount: product.promo_discount || 0,
+      promo_expiry: product.promo_expiry ? String(product.promo_expiry).slice(0, 10) : '',
+      promo_discount_percent: product.promo_discount_percent ?? 0,
       unit_total_price: product.unit_total_price,
       marketer_fee_per_unit: product.marketer_fee_per_unit,
       photos: [],
@@ -102,9 +102,12 @@ export default function ManageProducts() {
       fd.append('name_en', form.name_en)
       fd.append('unit_total_price', String(form.unit_total_price))
       fd.append('marketer_fee_per_unit', String(form.marketer_fee_per_unit))
-      if (form.promo_code) fd.append('promo_code', form.promo_code)
-      if (form.promo_expiry) fd.append('promo_expiry', form.promo_expiry)
-      if (form.promo_discount) fd.append('promo_discount', String(form.promo_discount))
+      fd.append('promo_code', form.promo_code.trim())
+      fd.append('promo_expiry', form.promo_expiry || '')
+      fd.append(
+        'promo_discount_percent',
+        form.promo_discount_percent ? String(form.promo_discount_percent) : ''
+      )
       form.photos.forEach((f) => fd.append('photos[]', f))
 
       let res
@@ -335,15 +338,19 @@ export default function ManageProducts() {
                     />
                   </div>
                   <div>
-                    <label className="label-text text-xs">{t('staff.promo_discount')}</label>
+                    <label className="label-text text-xs">{t('staff.promo_discount_percent')}</label>
                     <input
                       type="number"
-                      value={form.promo_discount || ''}
+                      value={form.promo_discount_percent || ''}
                       onChange={(e) =>
-                        setForm((p) => ({ ...p, promo_discount: parseFloat(e.target.value) || 0 }))
+                        setForm((p) => ({
+                          ...p,
+                          promo_discount_percent: parseFloat(e.target.value) || 0,
+                        }))
                       }
                       className="input-field"
                       min="0"
+                      max="100"
                       step="0.5"
                     />
                   </div>
@@ -440,7 +447,14 @@ export default function ManageProducts() {
                 {product.promo_code && (
                   <div>
                     <p className="text-tobacco-500">{t('staff.promo_code')}</p>
-                    <p className="text-forest-600 font-mono">{product.promo_code}</p>
+                    <p className="text-forest-600 font-mono">
+                      {product.promo_code}
+                      {product.promo_discount_percent != null && product.promo_discount_percent > 0 && (
+                        <span className="text-tobacco-400 ms-1">
+                          ({product.promo_discount_percent}%)
+                        </span>
+                      )}
+                    </p>
                   </div>
                 )}
               </div>

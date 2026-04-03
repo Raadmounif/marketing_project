@@ -10,16 +10,36 @@ class Offer extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name_ar', 'name_en', 'code', 'delivery_costs', 'marketer_fee_schedule', 'is_active',
+        'name_ar',
+        'name_en',
+        'code',
+        'delivery_costs',
+        'marketer_fee_schedule',
+        'is_active',
+        'promo_code',
+        'promo_expiry',
+        'promo_discount_percent',
     ];
 
     protected function casts(): array
     {
         return [
-            'delivery_costs'          => 'array',
-            'marketer_fee_schedule'   => 'array',
-            'is_active'               => 'boolean',
+            'delivery_costs'            => 'array',
+            'marketer_fee_schedule'     => 'array',
+            'is_active'                 => 'boolean',
+            'promo_expiry'              => 'date',
+            'promo_discount_percent'    => 'float',
         ];
+    }
+
+    public function hasActivePromo(): bool
+    {
+        if (! $this->promo_code || ! $this->promo_expiry) {
+            return false;
+        }
+
+        return $this->promo_expiry->isFuture()
+            && ($this->promo_discount_percent ?? 0) > 0;
     }
 
     public function sections()
