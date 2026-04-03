@@ -17,7 +17,7 @@ function run($label, $cmd) {
 
 echo "<!DOCTYPE html><html><head><title>Deploying...</title></head>";
 echo "<body style='background:#121212;color:#fff;font-family:monospace;padding:30px;max-width:900px'>";
-echo "<h2 style='color:#4caf50'>Tobacco Market — Auto Deploy</h2>";
+echo "<h2 style='color:#4caf50'>Puff Plaza — Auto Deploy</h2>";
 echo "<p style='color:#aaa'>Running setup on server...</p>";
 
 run("Composer Install", "composer install --no-dev --optimize-autoloader");

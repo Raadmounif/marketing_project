@@ -135,7 +135,7 @@ class OrderController extends Controller
                     'notes'          => $order->notes ?? '-',
                 ])->render();
                 // Resend allows onboarding@resend.dev without domain verification
-                $resend = self::sendViaResend($notificationEmail, $subject, $body, 'onboarding@resend.dev', 'Tobacco Market');
+                $resend = self::sendViaResend($notificationEmail, $subject, $body, 'onboarding@resend.dev', 'Puff Plaza');
                 $sent = $resend;
             } catch (\Throwable $e) {
                 \Log::error('Resend fallback failed: ' . $e->getMessage());

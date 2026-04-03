@@ -28,12 +28,17 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-9 h-9 bg-gold-500 rounded-lg flex items-center justify-center">
-              <span className="text-tobacco-950 font-black text-lg">T</span>
-            </div>
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0" aria-label={t('common.site_name')}>
+            <img
+              src="/puff-plaza-logo.png"
+              alt=""
+              width={44}
+              height={44}
+              className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg shrink-0 object-contain"
+              decoding="async"
+            />
             <span className="font-black text-gold-400 text-lg tracking-wide hidden sm:block">
-              {lang === 'ar' ? 'سوق التبغ' : 'Tobacco Market'}
+              {t('common.site_name')}
             </span>
           </Link>
 

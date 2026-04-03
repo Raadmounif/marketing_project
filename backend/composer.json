@@ -1,7 +1,7 @@
 {
     "name": "tobacco/market",
     "type": "project",
-    "description": "Tobacco Electronic Market Platform",
+    "description": "Puff Plaza e-commerce platform",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

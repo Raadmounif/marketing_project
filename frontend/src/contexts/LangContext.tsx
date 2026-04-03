@@ -10,7 +10,7 @@ interface LangContextType {
 const LangContext = createContext<LangContextType | null>(null)
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const [lang, setLang] = useState<'ar' | 'en'>(
     () => (localStorage.getItem('i18nextLng') as 'ar' | 'en') || 'ar'
   )
@@ -25,6 +25,14 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
       htmlEl.setAttribute('lang', 'en')
     }
   }, [lang])
+
+  useEffect(() => {
+    document.title = t('common.site_name')
+    const meta = document.querySelector('meta[name="description"]')
+    if (meta) {
+      meta.setAttribute('content', t('common.meta_description'))
+    }
+  }, [i18n.language, t])
 
   const toggleLang = useCallback(() => {
     const next = lang === 'ar' ? 'en' : 'ar'

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Puff Plaza mark</title>
+  <defs>
+    <linearGradient id="pp-frame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8C96A"/>
+      <stop offset="50%" stop-color="#C9A84C"/>
+      <stop offset="100%" stop-color="#8B6914"/>
+    </linearGradient>
+    <linearGradient id="pp-cloud" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFF8ED"/>
+      <stop offset="100%" stop-color="#D4B896"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#pp-frame)"/>
+  <rect x="8" y="8" width="48" height="48" rx="12" fill="#14100C"/>
+  <!-- Stylized puff / cloud -->
+  <g fill="url(#pp-cloud)">
+    <circle cx="24" cy="34" r="9"/>
+    <circle cx="32" cy="30" r="10"/>
+    <circle cx="40" cy="34" r="9"/>
+    <ellipse cx="32" cy="40" rx="16" ry="8"/>
+  </g>
+</svg>

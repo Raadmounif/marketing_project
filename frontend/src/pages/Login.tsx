@@ -30,8 +30,15 @@ export default function Login() {
       <div className="w-full max-w-md animate-slide-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gold-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-tobacco-950 font-black text-3xl">T</span>
+          <div className="mx-auto mb-4 flex justify-center">
+            <img
+              src="/puff-plaza-logo.png"
+              alt=""
+              width={128}
+              height={128}
+              className="h-28 w-28 sm:h-32 sm:w-32 rounded-xl object-contain mx-auto"
+              decoding="async"
+            />
           </div>
           <h1 className="text-2xl font-black text-cream-100">{t('auth.login_title')}</h1>
         </div>

@@ -13,8 +13,8 @@
     "statistics": "Statistics"
   },
   "landing": {
-    "hero_title": "Tobacco Electronic Market",
-    "hero_subtitle": "Discover the finest tobacco products at great prices with fast delivery",
+    "hero_title": "Puff Plaza",
+    "hero_subtitle": "Discover great products at fair prices with fast delivery",
     "browse_offers": "Browse Offers",
     "create_account": "Create Account",
     "how_it_works": "How It Works",
@@ -252,6 +252,9 @@
     "commission_status": "Status"
   },
   "common": {
+    "site_name": "Puff Plaza",
+    "site_copyright": "© 2025 Puff Plaza. All rights reserved.",
+    "meta_description": "Puff Plaza — shop online with fast delivery across the UAE.",
     "loading": "Loading...",
     "error": "An error occurred. Please try again.",
     "save": "Save",

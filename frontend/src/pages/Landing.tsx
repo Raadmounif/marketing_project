@@ -111,9 +111,8 @@ export default function Landing() {
             <div className="absolute bottom-10 end-10 w-48 h-48 rounded-full bg-gold-600 blur-3xl" />
           </div>
           <div className="relative max-w-3xl mx-auto">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-cream-100 mb-4">
-              <span className="text-gold-400">{lang === 'ar' ? 'سوق' : 'Tobacco'}</span>{' '}
-              {lang === 'ar' ? 'التبغ الإلكتروني' : 'Market'}
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-4">
+              <span className="text-gold-400">{t('landing.hero_title')}</span>
             </h1>
             <p className="text-lg text-tobacco-400 mb-8">{t('landing.hero_subtitle')}</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
