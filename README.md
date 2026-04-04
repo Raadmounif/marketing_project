@@ -147,10 +147,7 @@ Frontend runs at → `http://localhost:5173`
 
 ## Default Accounts
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@tobaccomarket.com | Admin@123 |
-| Staff | staff@tobaccomarket.com | Staff@123 |
+
 
 > Customers register themselves at `/register`.
 
