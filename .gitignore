@@ -42,3 +42,9 @@ deploy/composer.phar.download
 Thumbs.db
 *.log
 *.tmp
+
+# ========================
+# Local infra / secrets (DO NOT COMMIT)
+# ========================
+.mysql/
+**/composer.phar
