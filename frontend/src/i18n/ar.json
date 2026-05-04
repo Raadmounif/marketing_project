@@ -10,7 +10,8 @@
     "logout": "تسجيل الخروج",
     "staff": "لوحة الموظف",
     "admin": "الإدارة",
-    "statistics": "الإحصائيات"
+    "statistics": "الإحصائيات",
+    "contact_us": "تواصل معنا"
   },
   "landing": {
     "hero_title": "باف بلازا",
@@ -214,7 +215,19 @@
   },
   "admin": {
     "settings": "إعدادات النظام",
+    "header_section": "الترويسة — وسائل التواصل والاتصال",
+    "header_section_hint": "تظهر في الترويسة الروابط المملوءة فقط. روابط التواصل يجب أن تبدأ بـ https:// أو http://. رابط التواصل يمكن أن يكون mailto: أو tel: أيضاً.",
+    "notifications_section": "الإشعارات",
     "notification_email": "البريد الإلكتروني للإشعارات",
+    "notification_email_hint": "تُرسل إشعارات الطلبات والإيصالات إلى هذا العنوان.",
+    "contact_url": "رابط تواصل معنا",
+    "social_instagram": "رابط إنستغرام",
+    "social_facebook": "رابط فيسبوك",
+    "social_tiktok": "رابط تيك توك",
+    "social_youtube": "رابط يوتيوب",
+    "social_x": "رابط X (تويتر)",
+    "social_snapchat": "رابط سناب شات",
+    "social_whatsapp": "رابط واتساب",
     "save_settings": "حفظ الإعدادات",
     "settings_saved": "تم حفظ الإعدادات",
     "manage_users": "إدارة الحسابات",

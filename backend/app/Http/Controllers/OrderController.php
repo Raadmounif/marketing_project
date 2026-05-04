@@ -73,8 +73,19 @@ class OrderController extends Controller
         // Promo discount (AED) is applied to marketer commission first: e.g. fee 2 − discount 1 = 1 (per unit when qty 1).
         $marketerFeeTotal = max(0, round($baseMarketerFeeTotal - $promoDiscount, 2));
         $deliveryDate = now()->addDays(2)->toDateString();
+        $storedPromoCode = $promoDiscount > 0 ? $inputPromo : null;
+        $storedPromoDiscount = $promoDiscount > 0 ? round($promoDiscount, 2) : null;
 
-        $order = DB::transaction(function () use ($data, $user, $product, $total, $marketerFeeTotal, $deliveryDate) {
+        $order = DB::transaction(function () use (
+            $data,
+            $user,
+            $product,
+            $total,
+            $marketerFeeTotal,
+            $deliveryDate,
+            $storedPromoCode,
+            $storedPromoDiscount
+        ) {
             $orderNumber = Order::generateOrderNumber();
 
             return Order::create([
@@ -83,6 +94,8 @@ class OrderController extends Controller
                 'product_id'         => $product->id,
                 'quantity'           => $data['quantity'],
                 'notes'              => $data['notes'] ?? null,
+                'promo_code'         => $storedPromoCode,
+                'promo_discount'     => $storedPromoDiscount,
                 'total'              => $total,
                 'marketer_fee_total' => $marketerFeeTotal,
                 'delivery_date'      => $deliveryDate,
@@ -133,6 +146,8 @@ class OrderController extends Controller
                     'total'          => number_format($order->total, 2),
                     'marketerFee'    => number_format($order->marketer_fee_total, 2),
                     'notes'          => $order->notes ?? '-',
+                    'promoCode'      => $order->promo_code,
+                    'promoDiscount'  => $order->promo_discount !== null ? number_format((float) $order->promo_discount, 2) : null,
                 ])->render();
                 // Resend allows onboarding@resend.dev without domain verification
                 $resend = self::sendViaResend($notificationEmail, $subject, $body, 'onboarding@resend.dev', 'Puff Plaza');
@@ -213,12 +228,12 @@ class OrderController extends Controller
 
     public function uploadReceipt(Request $request, Order $order): JsonResponse
     {
-        $userId = (int) $request->user()->id;
+        $user = $request->user();
+        $userId = (int) $user->id;
         $orderUserId = (int) $order->user_id;
-        if ($orderUserId !== $userId) {
-            return response()->json([
-                'message' => 'You can only upload a receipt for your own order.',
-            ], 403);
+        $isStaffOrAdmin = in_array($user->role ?? '', ['staff', 'admin'], true);
+        if ($orderUserId !== $userId && !$isStaffOrAdmin) {
+            return response()->json(['message' => 'Forbidden.'], 403);
         }
 
         if ($order->status === 'delivered') {

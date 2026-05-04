@@ -47,6 +47,10 @@ class OrderNotificationMail extends Mailable
                 'marketerFee'    => number_format($this->order->marketer_fee_total, 2),
                 'notes'          => $this->order->notes ?? '-',
                 'customerStatus' => $this->customerStatus,
+                'promoCode'      => $this->order->promo_code,
+                'promoDiscount'  => $this->order->promo_discount !== null
+                    ? number_format((float) $this->order->promo_discount, 2)
+                    : null,
             ],
         );
     }

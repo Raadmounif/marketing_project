@@ -10,7 +10,8 @@
     "logout": "Logout",
     "staff": "Staff Panel",
     "admin": "Admin",
-    "statistics": "Statistics"
+    "statistics": "Statistics",
+    "contact_us": "Contact us"
   },
   "landing": {
     "hero_title": "Puff Plaza",
@@ -214,7 +215,19 @@
   },
   "admin": {
     "settings": "System Settings",
+    "header_section": "Header — social & contact",
+    "header_section_hint": "Only filled links appear in the site header. Social links must start with https:// or http://. Contact may also use mailto: or tel:.",
+    "notifications_section": "Notifications",
     "notification_email": "Notification Email",
+    "notification_email_hint": "Order and receipt notifications are sent to this address.",
+    "contact_url": "Contact us link",
+    "social_instagram": "Instagram URL",
+    "social_facebook": "Facebook URL",
+    "social_tiktok": "TikTok URL",
+    "social_youtube": "YouTube URL",
+    "social_x": "X (Twitter) URL",
+    "social_snapchat": "Snapchat URL",
+    "social_whatsapp": "WhatsApp URL",
     "save_settings": "Save Settings",
     "settings_saved": "Settings saved successfully",
     "manage_users": "Manage Accounts",

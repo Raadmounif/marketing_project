@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLang } from '../../contexts/LangContext'
 import { useAuth } from '../../contexts/AuthContext'
@@ -47,9 +47,17 @@ function buildOrderText(order: Order, allOrders: Order[], lang: string): string 
       '',
       '--- تفاصيل الطلب ---',
       `المنتج: ${order.product?.name_ar ?? '—'} × ${order.quantity}`,
-      `القيمة الكلية: ${order.total.toFixed(2)} د.إ`,
-      `عمولة المسوق: ${order.marketer_fee_total.toFixed(2)} د.إ`,
     ]
+    if (order.promo_code && (order.promo_discount ?? 0) > 0) {
+      lines.push(
+        `كود الخصم: ${order.promo_code}`,
+        `مبلغ الخصم على البضاعة: ${Number(order.promo_discount).toFixed(2)} د.إ`
+      )
+    }
+    lines.push(
+      `القيمة الكلية: ${order.total.toFixed(2)} د.إ`,
+      `عمولة المسوق: ${order.marketer_fee_total.toFixed(2)} د.إ`
+    )
     if (order.notes) lines.push('', '--- ملاحظات ---', order.notes)
     return lines.join('\n')
   }
@@ -67,9 +75,14 @@ function buildOrderText(order: Order, allOrders: Order[], lang: string): string 
     '',
     '--- Order details ---',
     `Product: ${order.product?.name_en ?? order.product?.name_ar ?? '—'} × ${order.quantity}`,
-    `Total: ${order.total.toFixed(2)} AED`,
-    `Marketer fee: ${order.marketer_fee_total.toFixed(2)} AED`,
   ]
+  if (order.promo_code && (order.promo_discount ?? 0) > 0) {
+    lines.push(
+      `Discount code: ${order.promo_code}`,
+      `Line discount: ${Number(order.promo_discount).toFixed(2)} AED`
+    )
+  }
+  lines.push(`Total: ${order.total.toFixed(2)} AED`, `Marketer fee: ${order.marketer_fee_total.toFixed(2)} AED`)
   if (order.notes) lines.push('', '--- Notes ---', order.notes)
   return lines.join('\n')
 }
@@ -82,6 +95,8 @@ export default function OrderHistory() {
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [uploadingId, setUploadingId] = useState<number | null>(null)
+  const receiptFileInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
   const fetchOrders = () => ordersApi.all().then((res) => setOrders(res.data))
 
@@ -94,6 +109,26 @@ export default function OrderHistory() {
       dateStyle: 'short',
       timeStyle: 'short',
     })
+
+  const handleUploadReceipt = async (orderId: number, file: File) => {
+    setUploadingId(orderId)
+    try {
+      const formData = new FormData()
+      formData.append('receipt', file)
+      const res = await ordersApi.uploadReceipt(orderId, formData)
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? res.data : o)))
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined
+      alert(msg || t('common.error'))
+    } finally {
+      setUploadingId(null)
+      const input = receiptFileInputRefs.current[orderId]
+      if (input) input.value = ''
+    }
+  }
 
   const handleCopy = async (order: Order) => {
     const text = buildOrderText(order, orders, lang)
@@ -282,6 +317,32 @@ export default function OrderHistory() {
                         {t('tracking.receipt_uploaded')} — {dateFmt(order.receipt_uploaded_at)}
                       </p>
                     )}
+                  </div>
+                ) : order.status === 'ordered' ? (
+                  <div className="bg-tobacco-800/50 rounded-xl p-6 border border-tobacco-700 border-dashed space-y-3">
+                    <p className="text-sm text-tobacco-400 text-center">{t('tracking.upload_hint')}</p>
+                    <input
+                      ref={(el) => {
+                        receiptFileInputRefs.current[order.id] = el
+                      }}
+                      type="file"
+                      accept="image/*,.pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) void handleUploadReceipt(order.id, file)
+                      }}
+                    />
+                    <div className="flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => receiptFileInputRefs.current[order.id]?.click()}
+                        disabled={uploadingId === order.id}
+                        className="btn-primary text-sm disabled:opacity-60"
+                      >
+                        {uploadingId === order.id ? t('common.loading') : t('tracking.upload_receipt')}
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="bg-tobacco-800/50 rounded-xl p-6 border border-tobacco-700 border-dashed text-center text-tobacco-500 text-sm">

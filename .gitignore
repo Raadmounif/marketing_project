@@ -48,3 +48,4 @@ Thumbs.db
 # ========================
 .mysql/
 **/composer.phar
+**/.env*.bak

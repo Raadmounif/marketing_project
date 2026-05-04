@@ -92,6 +92,10 @@ export interface Order {
   product_id: number
   quantity: number
   notes: string | null
+  /** Customer-entered code when a percentage promo was applied */
+  promo_code?: string | null
+  /** AED discount applied to line subtotal before delivery */
+  promo_discount?: number | null
   total: number
   marketer_fee_total: number
   delivery_date: string
@@ -139,4 +143,20 @@ export interface Statistic {
   commission_collected: number
   commission_uncollected: number
   orders: Order[]
+}
+
+export type SiteHeaderSocialSlug =
+  | 'facebook'
+  | 'instagram'
+  | 'x'
+  | 'tiktok'
+  | 'youtube'
+  | 'snapchat'
+  | 'whatsapp'
+
+export type SiteHeaderSocial = Partial<Record<SiteHeaderSocialSlug, string>>
+
+export interface SiteHeaderData {
+  contact_url: string | null
+  social: SiteHeaderSocial
 }

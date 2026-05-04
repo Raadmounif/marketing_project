@@ -11,7 +11,7 @@ class Order extends Model
 
     protected $fillable = [
         'order_number', 'user_id', 'product_id', 'quantity',
-        'notes', 'total', 'marketer_fee_total', 'delivery_date',
+        'notes', 'promo_code', 'promo_discount', 'total', 'marketer_fee_total', 'delivery_date',
         'status', 'receipt_path', 'receipt_uploaded_at', 'feedback',
         'commission_collected',
     ];
@@ -22,6 +22,7 @@ class Order extends Model
             'delivery_date'        => 'date',
             'receipt_uploaded_at'  => 'datetime',
             'total'                => 'float',
+            'promo_discount'       => 'float',
             'marketer_fee_total'   => 'float',
             'commission_collected' => 'boolean',
         ];

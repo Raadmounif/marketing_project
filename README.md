@@ -41,6 +41,16 @@ Make sure you have these installed:
 
 ---
 
+## Environment variables (local vs production)
+
+- **Never commit** real `.env` files. They are listed in `.gitignore`.
+- **Templates** (safe to commit) document both setups:
+  - **Backend:** `backend/.env.example` — uncomment the **local** URL block for `php artisan serve`, or use the **production** block for cPanel / HTTPS.
+  - **Frontend:** `frontend/.env.example` — switch `VITE_*` URLs between localhost and `https://puffplaza.com/...` before `npm run dev` or `npm run build`.
+  - **cPanel deploy scripts:** `deploy/.env.example` — SFTP/SSH and production `VITE_API_URL`; use commented lines if you ever point a test deploy at a local API.
+
+---
+
 ## Local Setup
 
 ### 1. Clone the repository

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { SiteHeaderData } from '../types'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
@@ -23,6 +24,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const path = String(error.config?.url ?? '').split('?')[0]
+      const full = `${error.config?.baseURL ?? ''}${path}`
+      // Wrong password on login/register returns 401 — do not hard-redirect or the UI cannot show the error
+      if (path === '/login' || path === '/register' || full.includes('/api/login') || full.includes('/api/register')) {
+        return Promise.reject(error)
+      }
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
       window.location.href = '/login'
@@ -148,6 +155,11 @@ export const hiwApi = {
 export const settingsApi = {
   get: () => api.get('/settings'),
   update: (data: object) => api.put('/settings', data),
+}
+
+/** Public header links (social + contact) — no auth */
+export const siteHeaderApi = {
+  get: () => api.get<SiteHeaderData>('/site-header'),
 }
 
 // Statistics

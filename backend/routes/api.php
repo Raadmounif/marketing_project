@@ -21,6 +21,7 @@ Route::get('/offers/{offer}/sections/{section}/products', [ProductController::cl
 Route::get('/offers/{offer}/products', [ProductController::class, 'index']);
 Route::get('/advertising-boards', [BoardController::class, 'index']);
 Route::get('/how-it-works', [HowItWorksController::class, 'index']);
+Route::get('/site-header', [SettingController::class, 'publicHeader']);
 
 // Auth
 Route::post('/register', [AuthController::class, 'register']);

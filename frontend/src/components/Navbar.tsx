@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useLang } from '../contexts/LangContext'
+import { siteHeaderApi } from '../api'
+import type { SiteHeaderData } from '../types'
+import SocialNavLinks from './SocialNavLinks'
 
 export default function Navbar() {
   const { t } = useTranslation()
@@ -11,6 +14,19 @@ export default function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [siteHeader, setSiteHeader] = useState<SiteHeaderData | null>(null)
+
+  useEffect(() => {
+    siteHeaderApi
+      .get()
+      .then((res) => {
+        setSiteHeader({
+          contact_url: res.data.contact_url ?? null,
+          social: res.data.social ?? {},
+        })
+      })
+      .catch(() => {})
+  }, [])
 
   const handleLogout = async () => {
     await logout()
@@ -68,6 +84,7 @@ export default function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            <SocialNavLinks data={siteHeader} variant="desktop" />
             {/* Language toggle */}
             <button
               onClick={toggleLang}
@@ -129,6 +146,8 @@ export default function Navbar() {
           {user && user.role === 'admin' && (
             <Link to="/admin/settings" className="block px-3 py-2 rounded-lg hover:bg-tobacco-800 text-cream-200" onClick={() => setMenuOpen(false)}>{t('nav.admin')}</Link>
           )}
+
+          <SocialNavLinks data={siteHeader} variant="mobile" />
 
           <div className="pt-2 border-t border-tobacco-700 space-y-1">
             {!user ? (
