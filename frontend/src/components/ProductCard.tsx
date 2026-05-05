@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useLang } from '../contexts/LangContext'
@@ -26,9 +26,13 @@ export default function ProductCard({ product, isFavorited = false, onFavoriteCh
 
   const name = lang === 'ar' ? product.name_ar : product.name_en
   const storageBase = getStorageBase()
-  const firstPhoto = product.photos?.[0]
-    ? `${storageBase}/${product.photos[0]}`
-    : null
+  const rawPhotoPath = product.photos?.[0]?.trim()
+  const firstPhoto = rawPhotoPath ? `${storageBase}/${rawPhotoPath}` : null
+  const showPhoto = Boolean(firstPhoto && !imgError)
+
+  useEffect(() => {
+    setImgError(false)
+  }, [product.id])
 
   const handleFavorite = async () => {
     if (!user) { navigate('/login'); return }
@@ -55,56 +59,65 @@ export default function ProductCard({ product, isFavorited = false, onFavoriteCh
     onOrder?.(product)
   }
 
+  const favoriteBtn = (
+    <button
+      type="button"
+      onClick={handleFavorite}
+      disabled={favLoading}
+      className={`p-2 rounded-full bg-tobacco-900/80 hover:bg-tobacco-800 backdrop-blur-sm transition-colors shrink-0 ${showPhoto ? 'absolute top-2 end-2' : ''}`}
+      title={faved ? t('product.remove_favorite') : t('product.add_favorite')}
+    >
+      <svg
+        className={`w-5 h-5 transition-colors ${faved ? 'text-red-400 fill-red-400' : 'text-cream-200'}`}
+        fill={faved ? 'currentColor' : 'none'}
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+    </button>
+  )
+
+  const promoBadge =
+    (hasActivePromoOnProduct(product) || hasActivePromoOnOffer(product.offer)) && (
+      <div
+        className={`px-2 py-1 bg-forest-600 text-white text-xs font-bold rounded-md shrink-0 ${showPhoto ? 'absolute top-2 start-2' : ''}`}
+      >
+        {t('product.promo_available')}
+      </div>
+    )
+
   return (
     <div className="card group hover:border-gold-600 transition-all duration-200 hover:shadow-lg hover:shadow-tobacco-950/50 flex flex-col">
-      {/* Product Image */}
-      <div className="relative h-44 bg-tobacco-800 overflow-hidden">
-        {firstPhoto && !imgError ? (
+      {showPhoto ? (
+        <div className="relative h-44 bg-tobacco-800 overflow-hidden">
           <img
-            src={firstPhoto}
+            src={firstPhoto as string}
             alt={name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={() => setImgError(true)}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <svg className="w-12 h-12 text-tobacco-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-        )}
-
-        {/* Favorite button */}
-        <button
-          onClick={handleFavorite}
-          disabled={favLoading}
-          className="absolute top-2 end-2 p-2 rounded-full bg-tobacco-900/80 hover:bg-tobacco-800 backdrop-blur-sm transition-colors"
-          title={faved ? t('product.remove_favorite') : t('product.add_favorite')}
+          {favoriteBtn}
+          {promoBadge}
+          {!product.is_active && (
+            <div className="absolute inset-0 bg-tobacco-950/80 flex items-center justify-center">
+              <span className="text-amber-400 font-bold text-sm text-center px-2">{t('product.out_of_stock')}</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          className={`relative flex items-center justify-between gap-2 px-4 pt-3 border-b border-tobacco-800 ${product.is_active ? 'pb-2' : 'pb-7'}`}
         >
-          <svg
-            className={`w-5 h-5 transition-colors ${faved ? 'text-red-400 fill-red-400' : 'text-cream-200'}`}
-            fill={faved ? 'currentColor' : 'none'}
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-        </button>
-
-        {/* Promo badge — product-level or offer-level */}
-        {(hasActivePromoOnProduct(product) || hasActivePromoOnOffer(product.offer)) && (
-          <div className="absolute top-2 start-2 px-2 py-1 bg-forest-600 text-white text-xs font-bold rounded-md">
-            {t('product.promo_available')}
-          </div>
-        )}
-
-        {/* Out-of-stock overlay */}
-        {!product.is_active && (
-          <div className="absolute inset-0 bg-tobacco-950/80 flex items-center justify-center">
-            <span className="text-amber-400 font-bold text-sm text-center px-2">{t('product.out_of_stock')}</span>
-          </div>
-        )}
-      </div>
+          <div className="min-h-[2rem] flex items-center">{promoBadge}</div>
+          {favoriteBtn}
+          {!product.is_active && (
+            <span className="absolute inset-x-4 bottom-2 text-amber-400 font-bold text-xs text-center">
+              {t('product.out_of_stock')}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-1 gap-3">

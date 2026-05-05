@@ -2,6 +2,8 @@
 
 A bilingual (Arabic / English) B2B tobacco marketplace built with **Laravel 11** (REST API) and **React 18 + TypeScript** (SPA frontend).
 
+**User-facing guide (roles, workflows, screens):** see **[docs/USER_MANUAL.md](docs/USER_MANUAL.md)** ([PDF](docs/USER_MANUAL.pdf)). To rebuild the PDF: `node scripts/export-user-manual-pdf.mjs` (Chrome or Edge required).
+
 ---
 
 ## Tech Stack
