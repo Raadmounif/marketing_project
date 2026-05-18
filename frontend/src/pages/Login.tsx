@@ -10,7 +10,7 @@ export default function Login() {
   const location = useLocation()
   const from = (location.state as any)?.from?.pathname || '/'
 
-  const [email, setEmail] = useState('')
+  const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
@@ -18,7 +18,7 @@ export default function Login() {
     e.preventDefault()
     setError('')
     try {
-      await login(email, password)
+      await login(loginId, password)
       navigate(from, { replace: true })
     } catch (err: any) {
       setError(err.response?.data?.message || t('common.error'))
@@ -46,15 +46,15 @@ export default function Login() {
         <div className="card p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="label-text">{t('auth.email')}</label>
+              <label className="label-text">{t('auth.login_id')}</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
                 required
-                autoComplete="email"
+                autoComplete="username"
                 className="input-field"
-                placeholder="example@email.com"
+                placeholder={t('auth.login_id_placeholder')}
               />
             </div>
 

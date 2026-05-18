@@ -23,7 +23,7 @@ export interface User {
   id: number
   name: string
   phone: string
-  email: string
+  email: string | null
   role: UserRole
   state: UAE_State | null
   address: string | null

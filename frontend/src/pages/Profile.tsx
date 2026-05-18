@@ -67,7 +67,7 @@ export default function Profile() {
             {[
               ['auth.name', user.name],
               ['auth.phone', user.phone],
-              ['auth.email', user.email],
+              ['auth.email', user.email || '—'],
               ['auth.state', user.state ? t(`states.${user.state}`) : '—'],
               ['auth.address', user.address || '—'],
             ].map(([labelKey, value]) => (

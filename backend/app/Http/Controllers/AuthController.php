@@ -12,18 +12,18 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name'    => 'required|string|max:255',
-            'phone'   => 'required|string|max:20',
-            'email'   => 'required|email|unique:users,email',
+            'name'     => 'required|string|max:255',
+            'phone'    => 'required|string|max:20|unique:users,phone',
+            'email'    => 'nullable|email|unique:users,email',
             'password' => 'required|string|min:4|confirmed',
-            'state'   => 'required|in:Abu Dhabi,Dubai,Sharjah,Ajman,Umm Al Quwain,Ras Al Khaimah,Fujairah',
-            'address' => 'required|string|max:500',
+            'state'    => 'required|in:Abu Dhabi,Dubai,Sharjah,Ajman,Umm Al Quwain,Ras Al Khaimah,Fujairah',
+            'address'  => 'required|string|max:500',
         ]);
 
         $user = User::create([
             'name'     => $data['name'],
             'phone'    => $data['phone'],
-            'email'    => $data['email'],
+            'email'    => $data['email'] ?? null,
             'password' => $data['password'],
             'state'    => $data['state'],
             'address'  => $data['address'],
@@ -41,11 +41,14 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'email'    => 'required|email',
+            'login'    => 'required|string|max:255',
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $data['email'])->first();
+        $login = trim($data['login']);
+        $user = User::where('phone', $login)
+            ->orWhere('email', $login)
+            ->first();
 
         if (!$user || !Hash::check($data['password'], $user->password)) {
             return response()->json(['message' => 'Invalid credentials.'], 401);
@@ -77,7 +80,8 @@ class AuthController extends Controller
 
         $data = $request->validate([
             'name'    => 'sometimes|string|max:255',
-            'phone'   => 'sometimes|string|max:20',
+            'phone'   => 'sometimes|string|max:20|unique:users,phone,' . $user->id,
+            'email'   => 'sometimes|nullable|email|unique:users,email,' . $user->id,
             'state'   => 'sometimes|in:Abu Dhabi,Dubai,Sharjah,Ajman,Umm Al Quwain,Ras Al Khaimah,Fujairah',
             'address' => 'sometimes|string|max:500',
             'password' => 'sometimes|string|min:4|confirmed',

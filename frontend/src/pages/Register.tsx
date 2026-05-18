@@ -25,7 +25,11 @@ export default function Register() {
     e.preventDefault()
     setError('')
     try {
-      await register(form)
+      const payload = { ...form }
+      if (!payload.email.trim()) {
+        delete (payload as { email?: string }).email
+      }
+      await register(payload)
       navigate('/')
     } catch (err: any) {
       setError(err.response?.data?.errors || err.response?.data?.message || t('common.error'))
@@ -74,8 +78,10 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="label-text">{t('auth.email')} <span className="text-red-400">*</span></label>
-              <input name="email" value={form.email} onChange={handleChange} required type="email" className="input-field" />
+              <label className="label-text">
+                {t('auth.email')} <span className="text-tobacco-500 font-normal">({t('common.optional')})</span>
+              </label>
+              <input name="email" value={form.email} onChange={handleChange} type="email" className="input-field" />
               {getFieldError('email') && <p className="text-red-400 text-xs mt-1">{getFieldError('email')}</p>}
             </div>
 
